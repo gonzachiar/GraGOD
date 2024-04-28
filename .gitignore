@@ -142,3 +142,5 @@ data
 
 # Checkpoints
 *.ckpt
+
+datasets_files/
