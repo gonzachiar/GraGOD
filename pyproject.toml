@@ -13,15 +13,18 @@ packages = [
 gragod = 'gragod.cli:app'
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.12"
 matplotlib = "^3.8.2"
 numpy = "^1.26.3"
 python-dotenv = "^1.0.1"
 pandas = "^2.2.0"
 pyarrow = "^15.0.0"
 typer = "^0.12.3"
+scikit-learn = "^1.4.2"
 
-[tool.poetry.dev-dependencies]
+
+[tool.poetry.group.dev.dependencies]
+temporian = "^0.9.0"
 pre-commit = "^3.5.0"
 black = "^22.8.0"
 flake8 = "^3.9.2"
@@ -30,8 +33,6 @@ ipykernel = "^6.0.1"
 ipython = "^7.25.0"
 ipdb = "^0.13.9"
 mypy = "^0.910"
-
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
