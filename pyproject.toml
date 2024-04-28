@@ -1,0 +1,49 @@
+[tool.poetry]
+name = "gragod"
+version = "0.1.0"
+description = ""
+authors = ["gonzachiar <gonzalochiarlone@gmail.com>",
+            "fede-bello <fe.debello@gmail.com>"]
+readme = "README.md"
+packages = [
+    { include = "gragod" },
+]
+
+[tool.poetry.scripts]
+gragod = 'gragod.cli:app'
+
+[tool.poetry.dependencies]
+python = "^3.9"
+matplotlib = "^3.8.2"
+numpy = "^1.26.3"
+python-dotenv = "^1.0.1"
+pandas = "^2.2.0"
+pyarrow = "^15.0.0"
+typer = "^0.12.3"
+
+[tool.poetry.dev-dependencies]
+pre-commit = "^3.5.0"
+black = "^22.8.0"
+flake8 = "^3.9.2"
+isort = "^5.9.1"
+ipykernel = "^6.0.1"
+ipython = "^7.25.0"
+ipdb = "^0.13.9"
+mypy = "^0.910"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 88
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
