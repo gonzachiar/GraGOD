@@ -112,11 +112,11 @@ def load_training_data(
         # X_val = imp_mean.transform(X_val)
         # X_test = imp_mean.transform(X_test)
 
-        X_train = interpolate_data(X_train)
-        X_val = interpolate_data(X_val)
-        X_test = interpolate_data(X_test)
+    X_train = interpolate_data(X_train)
+    X_val = interpolate_data(X_val)
+    X_test = interpolate_data(X_test)
 
-        print("Data cleaned!")
+    print("Data cleaned!")
 
     X_train = torch.tensor(X_train).to(torch.float32)
     X_val = torch.tensor(X_val).to(torch.float32)
