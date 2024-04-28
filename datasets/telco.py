@@ -10,6 +10,13 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 def load_df(base_path: str | os.PathLike) -> Tuple[pd.DataFrame, ...]:
+    """
+    Load the TELCO datasets as pandas DataFrames from the given path.
+    Args:
+        base_path: The path where the datasets are stored.
+    Returns:
+        Tuple of DataFrames for train, validation, and test datasets.
+    """
     df_train = pd.read_csv(os.path.join(base_path, "TELCO_data_train.csv"))
     df_train_labels = pd.read_csv(os.path.join(base_path, "TELCO_labels_train.csv"))
     df_val = pd.read_csv(os.path.join(base_path, "TELCO_data_val.csv"))
@@ -21,6 +28,13 @@ def load_df(base_path: str | os.PathLike) -> Tuple[pd.DataFrame, ...]:
 
 
 def load_tp(base_path: str | os.PathLike):
+    """
+    Load the TELCO datasets as Temporian EventSets from the given path.
+    Args:
+        base_path: The path where the datasets are stored.
+    Returns:
+        Tuple of EventSets for train, validation, and test datasets.
+    """
     import temporian as tp
 
     es_train = tp.from_csv(
@@ -46,6 +60,13 @@ def load_tp(base_path: str | os.PathLike):
 
 
 def convert_df_to_tensor(df: pd.DataFrame) -> np.ndarray:
+    """
+    Convert a pandas DataFrame to a numpy array, exluding the timestamps.
+    Args:
+        df: The DataFrame to convert.
+    Returns:
+        The converted numpy array.
+    """
     X = np.array(df.values[:, 1:])
     X = np.vstack(X).astype(float)  # type:ignore
 
@@ -53,6 +74,13 @@ def convert_df_to_tensor(df: pd.DataFrame) -> np.ndarray:
 
 
 def load_data(base_path: str | os.PathLike) -> Tuple[np.ndarray, ...]:
+    """
+    Load the TELCO datasets as numpy arrays from the given path.
+    Args:
+        base_path: The path where the datasets are stored.
+    Returns:
+        Tuple of numpy arrays for train, validation, and test datasets.
+    """
     df_train, df_train_labels, df_val, df_val_labels, df_test, df_test_labels = load_df(
         base_path
     )
@@ -69,6 +97,14 @@ def load_data(base_path: str | os.PathLike) -> Tuple[np.ndarray, ...]:
 def interpolate_data(
     data: np.ndarray, method: Literal["linear", "spline", "time"] = "spline"
 ) -> np.ndarray:
+    """
+    Interpolate the missing values in the given data.
+    Args:
+        data: The data to interpolate.
+        method: The interpolation method to use. Default is "spline".
+    Returns:
+        The interpolated data.
+    """
     df = pd.DataFrame(data)
 
     df.interpolate(method=method, inplace=True, order=3)
@@ -78,6 +114,14 @@ def interpolate_data(
 
 
 def normalize_data(data, scaler=None) -> Tuple[np.ndarray, MinMaxScaler]:
+    """
+    Normalize the given data.
+    Args:
+        data: The data to normalize.
+        scaler: The scaler to use for normalization.
+    Returns:
+        The normalized data and the scaler used.
+    """
     data = np.asarray(data, dtype=np.float32)
     if np.any(sum(np.isnan(data))):
         data = np.nan_to_num(data)
@@ -94,6 +138,16 @@ def normalize_data(data, scaler=None) -> Tuple[np.ndarray, MinMaxScaler]:
 def load_training_data(
     base_path: str, normalize: bool = False, clean: bool = False
 ) -> Tuple[torch.Tensor, ...]:
+    """
+    Load the training data.
+    Args:
+        base_path: The path where the datasets are stored.
+        normalize: Whether to normalize the data. Default is False.
+        clean: Whether to clean the data. Default is False.
+    Returns:
+        Tuple of training data, training labels, validation data, validation labels,
+        and test data.
+    """
     X_train, X_val, X_test, X_train_labels, X_val_labels, X_test_labels = load_data(
         base_path=base_path
     )
