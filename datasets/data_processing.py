@@ -1,13 +1,11 @@
-from typing import Literal, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import torch
 from sklearn.preprocessing import MinMaxScaler
 
-# from sklearn.impute import KNNImputer, SimpleImputer
-
-INTERPOLATION_METHODS = Literal["linear", "spline"]
+from gragod import INTERPOLATION_METHODS
 
 
 def convert_df_to_tensor(df: pd.DataFrame) -> np.ndarray:

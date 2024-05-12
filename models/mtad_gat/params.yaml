@@ -1,0 +1,57 @@
+dataset: "telco"
+
+data_params:
+  data_dir: "data/"
+  group: "1-1"
+  lookback: 100
+  normalize: true
+  spec_res: false
+
+model_params:
+  kernel_size: 7
+  use_gatv2: true
+  feat_gat_embed_dim: null
+  time_gat_embed_dim: null
+  gru_n_layers: 1
+  gru_hid_dim: 1200
+  forecast_n_layers: 3
+  forecast_hid_dim: 300
+  recon_n_layers: 1
+  recon_hid_dim: 300
+  alpha: 0.2
+
+train_params:
+  window_size: 200
+  n_epochs: 100
+  batch_size: 256
+  init_lr: 0.001
+  lr: 0.0001
+  shuffle_dataset: true
+  dropout: 0.3
+  dload: "output/mtad_gat"
+  use_cuda: true
+  use_mps: false
+  print_every: 1
+  log_tensorboard: true
+  save_path: "output/mtad_gat"
+  target_dims: 1
+  args_summary: "args_summary"
+  log_dir: "output/mtad_gat"
+  weights_path: null
+  normalize_data: false
+  clean_data: true
+  interpolate_method: null
+
+predictor_params:
+  dataset: "custom"
+  target_dims: 1
+  scale_scores: false
+  level: 0.9999 
+  q: 0.001
+  dynamic_pot: false
+  use_mov_av: false
+  gamma: 0.8
+  reg_level: 1
+  save_path: "saved_models/mtad_gat/features"
+other:
+  comment: ""
