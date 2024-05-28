@@ -1,6 +1,7 @@
 import datetime
 import os
 
+import networkx as nx
 import pandas as pd
 
 
@@ -46,5 +47,38 @@ def load_service(
         all_dfs.append(df_pivot)
 
     final_df = pd.concat(all_dfs, axis=0)
-    print(final_df.columns)
     return final_df
+
+
+def create_graph(df: pd.DataFrame, city_dims: tuple[int, int] = (151, 165)) -> nx.Graph:
+    """
+    Creates a graph from the DataFrame.
+    Args:
+        df: The DataFrame with the service data.
+    Returns:
+        The networkx graph.
+    """
+    n_rows, n_cols = city_dims
+    G = nx.Graph()
+    for index, row in df[:10].iterrows():
+        for tile_id, traffic_value in row.items():
+            if tile_id == "time":
+                continue
+            tile_id = int(tile_id)
+            row_index = tile_id // n_cols
+            col_index = tile_id % n_cols
+            node = (row_index, col_index)
+
+            G.add_node(tile_id, traffic=traffic_value)
+
+            # if the nodes are next to each other, add an edge
+            # TODO: eventually try more sophisticated edge creation
+            for adj in [
+                (row_index - 1, col_index),
+                (row_index + 1, col_index),
+                (row_index, col_index - 1),
+                (row_index, col_index + 1),
+            ]:
+                if adj in G.nodes:
+                    G.add_edge(node, adj)
+    return G
