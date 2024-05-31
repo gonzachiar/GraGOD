@@ -1,8 +1,14 @@
 import datetime
 import os
+from enum import Enum
 
 import networkx as nx
 import pandas as pd
+
+
+class SuffixName(Enum):
+    DL = "DL"
+    UL = "UL"
 
 
 def load_service(
@@ -10,6 +16,7 @@ def load_service(
     dates: list[str] = [str(day) for day in range(20190501, 20190532)],
     path_to_datasets: str = "../datasets_files/mihaela",
     city_name: str = "Nancy",
+    suffix_name: SuffixName = SuffixName.DL,
 ) -> pd.DataFrame:
     """
     Loads the service data for a given city and service.
@@ -18,6 +25,7 @@ def load_service(
         dates: The list of dates to load.
         path_to_datasets: The path to the datasets.
         city_name: The name of the city.
+        suffix_name: The suffix of the file name.
     Returns:
         The DataFrame with the service data. In the first column is the
         is the time, in the other columns are the traffic values for each tile_id.
@@ -29,7 +37,7 @@ def load_service(
             city_name,
             service_name,
             day_str,
-            f"{city_name}_{service_name}_{day_str}_DL.txt",
+            f"{city_name}_{service_name}_{day_str}_{suffix_name.value}.txt",
         )
         day = datetime.datetime.strptime(day_str, "%Y%m%d")
         times = [day + datetime.timedelta(minutes=15 * i) for i in range(96)]
@@ -48,6 +56,36 @@ def load_service(
 
     final_df = pd.concat(all_dfs, axis=0)
     return final_df
+
+
+def load_all_services(
+    dates: list[str] = [str(day) for day in range(20190501, 20190532)],
+    path_to_datasets: str = "../datasets_files/mihaela",
+    city_name: str = "Nancy",
+) -> pd.DataFrame:
+    """
+    Loads all the services for a given city and merges them into one DataFrame.
+    Args:
+        dates: The list of dates to load.
+        path_to_datasets: The path to the datasets.
+        city_name: The name of the city.
+    Returns:
+        The DataFrame with the service data. In the first column is the
+        is the time, in the other columns are the traffic values for each tile_id.
+    """
+    service_dirs = os.listdir(os.path.join(path_to_datasets, city_name))
+    all_data = []
+    for service_name in service_dirs:
+        for suffix in SuffixName:
+            service_data = load_service(
+                service_name,
+                dates=dates,
+                path_to_datasets=path_to_datasets,
+                city_name=city_name,
+                suffix_name=suffix,
+            )
+            all_data.append(service_data)
+    return all_data
 
 
 def create_graph(df: pd.DataFrame, city_dims: tuple[int, int] = (151, 165)) -> nx.Graph:
