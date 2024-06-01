@@ -7,7 +7,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 # from sklearn.impute import KNNImputer, SimpleImputer
 
-INTERPOLATION_METHODS = Literal["linear", "spline", "time"]
+INTERPOLATION_METHODS = Literal["linear", "spline"]
 
 
 def convert_df_to_tensor(df: pd.DataFrame) -> np.ndarray:
@@ -98,9 +98,6 @@ def preprocess_df(
         else:
             mask = labels == 1.0
             data[mask] = np.nan
-            # imp_mean = SimpleImputer(missing_values=np.nan, strategy="mean")
-            # imp_mean.fit(data)
-            # data = imp_mean.transform(data)
 
     data = interpolate_data(data, method=interpolate_method)
     print("Data cleaned!")
