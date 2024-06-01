@@ -16,9 +16,9 @@ def main(params: dict):
     # Load data
     X_train, X_val, *_ = load_training_data(
         dataset=params["dataset"],
-        test_size=params["test_size"],
-        val_size=params["val_size"],
-        shuffle=params["shuffle"],
+        test_size=params["train_params"]["test_size"],
+        val_size=params["train_params"]["val_size"],
+        shuffle=params["train_params"]["shuffle"],
         normalize=params["train_params"]["normalize_data"],
         clean=params["train_params"]["clean_data"],
         interpolate_method=params["train_params"]["interpolate_method"],
