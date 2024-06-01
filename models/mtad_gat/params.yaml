@@ -38,6 +38,9 @@ train_params:
   args_summary: "args_summary"
   log_dir: "output/mtad_gat"
   weights_path: null
+  test_size: 0.1
+  val_size: 0.1
+  shuffle: true
   normalize_data: false
   clean_data: true
   interpolate_method: null

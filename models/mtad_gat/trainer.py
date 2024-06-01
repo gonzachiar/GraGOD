@@ -8,10 +8,11 @@ import torch.nn as nn
 import torch.utils
 import torch.utils.data
 import torch.utils.data.dataloader
-from torch.utils.tensorboard import SummaryWriter
 
 from gragod import PathType
 from models.mtad_gat.model import MTAD_GAT
+
+# from torch.utils.tensorboard import SummaryWriter
 
 
 class Trainer:
@@ -97,8 +98,9 @@ class Trainer:
             self.model.to("mps")
 
         if self.log_tensorboard:
-            self.writer = SummaryWriter(f"{log_dir}")
-            self.writer.add_text("args_summary", args_summary)
+            pass
+            # self.writer = SummaryWriter(f"{log_dir}")
+            # self.writer.add_text("args_summary", args_summary)
 
     def fit(
         self,
