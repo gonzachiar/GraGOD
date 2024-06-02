@@ -1,9 +1,16 @@
 import datetime
 import os
 from enum import Enum
+from typing import List, Literal, Optional
 
 import networkx as nx
 import pandas as pd
+
+from datasets.data_processing import INTERPOLATION_METHODS, preprocess_df
+
+CITIES = Literal["Nancy"]
+BASE_PATH_DEFAULT = "datasets_files/mihaela"
+DEFAULT_DATES = [str(day) for day in range(20190501, 20190532)]
 
 
 class SuffixName(Enum):
@@ -11,11 +18,11 @@ class SuffixName(Enum):
     UL = "UL"
 
 
-def load_service(
-    service_name: str,
-    dates: list[str] = [str(day) for day in range(20190501, 20190532)],
-    path_to_datasets: str = "../datasets_files/mihaela",
-    city_name: str = "Nancy",
+def load_mihaela_service_df(
+    service_name: str = "Clash_of_Clans",
+    dates: List[str] = DEFAULT_DATES,
+    base_path: str = BASE_PATH_DEFAULT,
+    city_name: CITIES = "Nancy",
     suffix_name: SuffixName = SuffixName.DL,
 ) -> pd.DataFrame:
     """
@@ -23,7 +30,7 @@ def load_service(
     Args:
         service_name: The name of the service.
         dates: The list of dates to load.
-        path_to_datasets: The path to the datasets.
+        base_path: The path to the datasets.
         city_name: The name of the city.
         suffix_name: The suffix of the file name.
     Returns:
@@ -33,7 +40,7 @@ def load_service(
     all_dfs = []
     for day_str in dates:
         traffic_file = os.path.join(
-            path_to_datasets,
+            base_path,
             city_name,
             service_name,
             day_str,
@@ -58,6 +65,44 @@ def load_service(
     return final_df
 
 
+def load_mihaela_service_training_data(
+    service_name: str,
+    dates: List[str] = DEFAULT_DATES,
+    base_path: str = BASE_PATH_DEFAULT,
+    city_name: CITIES = "Nancy",
+    normalize: bool = False,
+    clean: bool = False,
+    scaler=None,
+    interpolate_method: Optional[INTERPOLATION_METHODS] = None,
+):
+    """
+    Load the training data for the given service from Mihaela dataset.
+    Args:
+        service_name: The name of the service.
+        dates: The list of dates to load.
+        base_path: The path to the datasets.
+        city_name: The name of the city.
+        normalize: Whether to normalize the data. Default is False.
+        clean: Whether to clean the data. Default is False.
+        scaler: The scaler to use for normalization.
+        interpolate_method: The method to use for interpolation.
+    """
+    df = load_mihaela_service_df(
+        service_name=service_name,
+        dates=dates,
+        base_path=base_path,
+        city_name=city_name,
+    )
+
+    return preprocess_df(
+        data_df=df,
+        normalize=normalize,
+        clean=clean,
+        scaler=scaler,
+        interpolate_method=interpolate_method,
+    )
+
+
 def load_all_services(
     dates: list[str] = [str(day) for day in range(20190501, 20190532)],
     path_to_datasets: str = "../datasets_files/mihaela",
@@ -77,7 +122,7 @@ def load_all_services(
     all_data = []
     for service_name in service_dirs:
         for suffix in SuffixName:
-            service_data = load_service(
+            service_data = load_mihaela_service_df(
                 service_name,
                 dates=dates,
                 path_to_datasets=path_to_datasets,
