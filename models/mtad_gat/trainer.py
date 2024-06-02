@@ -8,11 +8,10 @@ import torch.nn as nn
 import torch.utils
 import torch.utils.data
 import torch.utils.data.dataloader
+from torch.utils.tensorboard import SummaryWriter
 
 from gragod import PathType
 from models.mtad_gat.model import MTAD_GAT
-
-# from torch.utils.tensorboard import SummaryWriter
 
 
 class Trainer:
@@ -51,8 +50,7 @@ class Trainer:
         init_lr: float = 0.001,
         forecast_criterion: torch.nn.Module = nn.MSELoss(),  # Check type
         recon_criterion: torch.nn.Module = nn.MSELoss(),  # Check type
-        use_cuda: bool = False,
-        use_mps: bool = True,
+        device: str = "cpu",
         dload: str = "",
         log_dir: str = "output/",
         print_every: int = 1,
@@ -71,12 +69,7 @@ class Trainer:
         self.init_lr = init_lr
         self.forecast_criterion = forecast_criterion
         self.recon_criterion = recon_criterion
-        if use_mps:
-            self.device = "mps"
-        elif use_cuda:
-            self.device = "cuda" if use_cuda and torch.cuda.is_available() else "cpu"
-        else:
-            self.device = "cpu"
+        self.device = device
         self.dload = dload
         self.log_dir = log_dir
         self.print_every = print_every
@@ -98,9 +91,9 @@ class Trainer:
             self.model.to("mps")
 
         if self.log_tensorboard:
-            pass
-            # self.writer = SummaryWriter(f"{log_dir}")
-            # self.writer.add_text("args_summary", args_summary)
+            # pass
+            self.writer = SummaryWriter(f"{log_dir}")
+            self.writer.add_text("args_summary", args_summary)
 
     def fit(
         self,
@@ -280,7 +273,7 @@ class Trainer:
         if os.path.exists(self.dload):
             pass
         else:
-            os.mkdir(self.dload)
+            os.makedirs(self.dload)
         torch.save(self.model.state_dict(), PATH)
 
     def load(self, path: PathType):

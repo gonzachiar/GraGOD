@@ -24,13 +24,13 @@ def main(params, feature: Optional[int] = None):
         X_labels_test,
     ) = load_training_data(
         dataset=params["dataset"],
-        test_size=params["test_size"],
-        val_size=params["val_size"],
-        shuffle=params["shuffle"],
+        test_size=params["train_params"]["test_size"],
+        val_size=params["train_params"]["val_size"],
+        shuffle=params["train_params"]["shuffle"],
+        normalize=params["train_params"]["normalize_data"],
+        interpolate_method=params["train_params"]["interpolate_method"],
         random_state=RANDOM_SEED,
-        normalize=params["normalize_data"],
         clean=False,
-        interpolate_method=params["interpolate_method"],
     )
 
     df = pd.read_pickle(
