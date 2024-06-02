@@ -1,15 +1,17 @@
 import os
-from typing import Literal, Tuple
+from typing import Optional, Tuple
 
-import numpy as np
 import pandas as pd
 import torch
 
-# from sklearn.impute import KNNImputer, SimpleImputer
-from sklearn.preprocessing import MinMaxScaler
+from datasets.data_processing import INTERPOLATION_METHODS, preprocess_df
+
+BASE_PATH_DEFAULT = "datasets_files/telco"
 
 
-def load_df(base_path: str | os.PathLike) -> Tuple[pd.DataFrame, ...]:
+def load_telco_df(
+    base_path: str | os.PathLike = BASE_PATH_DEFAULT,
+) -> Tuple[pd.DataFrame, ...]:
     """
     Load the TELCO datasets as pandas DataFrames from the given path.
     Args:
@@ -27,7 +29,7 @@ def load_df(base_path: str | os.PathLike) -> Tuple[pd.DataFrame, ...]:
     return df_train, df_train_labels, df_val, df_val_labels, df_test, df_test_labels
 
 
-def load_tp(base_path: str | os.PathLike):
+def load_telco_tp(base_path: str | os.PathLike = BASE_PATH_DEFAULT):
     """
     Load the TELCO datasets as Temporian EventSets from the given path.
     Args:
@@ -59,87 +61,15 @@ def load_tp(base_path: str | os.PathLike):
     return es_train, es_label_train, es_val, es_label_val, es_test, es_label_test
 
 
-def convert_df_to_tensor(df: pd.DataFrame) -> np.ndarray:
-    """
-    Convert a pandas DataFrame to a numpy array, exluding the timestamps.
-    Args:
-        df: The DataFrame to convert.
-    Returns:
-        The converted numpy array.
-    """
-    X = np.array(df.values[:, 1:])
-    X = np.vstack(X).astype(float)  # type:ignore
-
-    return X
-
-
-def load_data(base_path: str | os.PathLike) -> Tuple[np.ndarray, ...]:
-    """
-    Load the TELCO datasets as numpy arrays from the given path.
-    Args:
-        base_path: The path where the datasets are stored.
-    Returns:
-        Tuple of numpy arrays for train, validation, and test datasets.
-    """
-    df_train, df_train_labels, df_val, df_val_labels, df_test, df_test_labels = load_df(
-        base_path
-    )
-    X_train = convert_df_to_tensor(df_train)
-    X_val = convert_df_to_tensor(df_val)
-    X_test = convert_df_to_tensor(df_test)
-    X_train_labels = convert_df_to_tensor(df_train_labels)
-    X_val_labels = convert_df_to_tensor(df_val_labels)
-    X_labels_test = convert_df_to_tensor(df_test_labels)
-
-    return X_train, X_val, X_test, X_train_labels, X_val_labels, X_labels_test
-
-
-def interpolate_data(
-    data: np.ndarray, method: Literal["linear", "spline", "time"] = "spline"
-) -> np.ndarray:
-    """
-    Interpolate the missing values in the given data.
-    Args:
-        data: The data to interpolate.
-        method: The interpolation method to use. Default is "spline".
-    Returns:
-        The interpolated data.
-    """
-    df = pd.DataFrame(data)
-
-    df.interpolate(method=method, inplace=True, order=3)
-    interpolated_data = df.to_numpy()
-
-    return interpolated_data
-
-
-def normalize_data(data, scaler=None) -> Tuple[np.ndarray, MinMaxScaler]:
-    """
-    Normalize the given data.
-    Args:
-        data: The data to normalize.
-        scaler: The scaler to use for normalization.
-    Returns:
-        The normalized data and the scaler used.
-    """
-    data = np.asarray(data, dtype=np.float32)
-    if np.any(sum(np.isnan(data))):
-        data = np.nan_to_num(data)
-
-    if scaler is None:
-        scaler = MinMaxScaler()
-        scaler.fit(data)
-    data = scaler.transform(data)
-    print("Data normalized")
-
-    return data, scaler
-
-
-def load_training_data(
-    base_path: str, normalize: bool = False, clean: bool = False
+def load_telco_training_data(
+    base_path: str | os.PathLike = BASE_PATH_DEFAULT,
+    normalize: bool = False,
+    clean: bool = False,
+    scaler=None,
+    interpolate_method: Optional[INTERPOLATION_METHODS] = None,
 ) -> Tuple[torch.Tensor, ...]:
     """
-    Load the training data.
+    Load the data for the telco dataset, splitted into train, val and test.
     Args:
         base_path: The path where the datasets are stored.
         normalize: Whether to normalize the data. Default is False.
@@ -148,37 +78,41 @@ def load_training_data(
         Tuple of training data, training labels, validation data, validation labels,
         and test data.
     """
-    X_train, X_val, X_test, X_train_labels, X_val_labels, X_test_labels = load_data(
-        base_path=base_path
+    (
+        df_train,
+        df_train_labels,
+        df_val,
+        df_val_labels,
+        df_test,
+        df_test_labels,
+    ) = load_telco_df(base_path=base_path)
+
+    X_train, X_train_labels = preprocess_df(
+        data_df=df_train,
+        labels_df=df_train_labels,
+        normalize=normalize,
+        clean=clean,
+        scaler=scaler,
+        interpolate_method=interpolate_method,
+    )
+    X_val, X_val_labels = preprocess_df(
+        data_df=df_val,
+        labels_df=df_val_labels,
+        normalize=normalize,
+        clean=clean,
+        scaler=scaler,
+        interpolate_method=interpolate_method,
+    )
+    X_test, X_test_labels = preprocess_df(
+        data_df=df_test,
+        labels_df=df_test_labels,
+        normalize=normalize,
+        clean=clean,
+        scaler=scaler,
+        interpolate_method=interpolate_method,
     )
 
-    if normalize:
-        X_train, _ = normalize_data(X_train)
-        X_val, _ = normalize_data(X_val)
-        X_test, _ = normalize_data(X_test)
-
-    if clean:
-        mask = X_train_labels == 1.0
-        X_train[mask] = np.nan
-        # imp_mean = SimpleImputer(missing_values=np.nan, strategy="mean")
-        # imp_mean.fit(X_train)
-        # X_train = imp_mean.transform(X_train)
-        # X_val = imp_mean.transform(X_val)
-        # X_test = imp_mean.transform(X_test)
-
-    X_train = interpolate_data(X_train)
-    X_val = interpolate_data(X_val)
-    X_test = interpolate_data(X_test)
-
-    print("Data cleaned!")
-
-    X_train = torch.tensor(X_train).to(torch.float32)
-    X_val = torch.tensor(X_val).to(torch.float32)
-    X_test = torch.tensor(X_test).to(torch.float32)
-    X_train_labels = torch.tensor(X_train_labels).to(torch.float32)
-    X_val_labels = torch.tensor(X_val_labels).to(torch.float32)
-    X_test_labels = torch.tensor(X_test_labels).to(torch.float32)
-
+    # Ignorin typing since is will never be None
     return (
         X_train,
         X_val,
@@ -186,4 +120,4 @@ def load_training_data(
         X_train_labels,
         X_val_labels,
         X_test_labels,
-    )
+    )  # type: ignore
