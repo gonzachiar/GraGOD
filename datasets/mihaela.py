@@ -135,9 +135,11 @@ def load_all_services(
 
 def create_graph(df: pd.DataFrame, city_dims: tuple[int, int] = (151, 165)) -> nx.Graph:
     """
-    Creates a graph from the DataFrame.
+    Creates a graph from the DataFrame. Each tile_id is a node and the edges are
+    created between the nodes that are next to each other.
     Args:
         df: The DataFrame with the service data.
+        city_dims: The dimensions of the city.
     Returns:
         The networkx graph.
     """
