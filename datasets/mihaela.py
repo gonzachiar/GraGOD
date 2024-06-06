@@ -28,7 +28,7 @@ def load_mihaela_service_df(
         service_name: The name of the service.
         dates: The list of dates to load.
         base_path: The path to the datasets.
-        city_name: The name of the city.
+        city_name: The enum of the city.
     Returns:
         The DataFrame with the service data. In the first column is the
         is the time, in the other columns are the traffic values for each tile_id.
@@ -78,7 +78,7 @@ def load_mihaela_service_training_data(
         service_name: The name of the service.
         dates: The list of dates to load.
         base_path: The path to the datasets.
-        city_name: The name of the city.
+        city_name: The enum of the city.
         normalize: Whether to normalize the data. Default is False.
         clean: Whether to clean the data. Default is False.
         scaler: The scaler to use for normalization.

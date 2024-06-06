@@ -35,7 +35,7 @@ def interpolate_data(
     Interpolate the missing values in the given data.
     Args:
         data: The data to interpolate.
-        method: The interpolation method to use. Default is "spline".
+        method: The interpolation method to use. Default is InterPolationMethods.SPLINE.
     Returns:
         The interpolated data.
     """
