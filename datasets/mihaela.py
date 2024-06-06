@@ -1,9 +1,10 @@
 import datetime
 import os
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import pandas as pd
+import torch
 
 from datasets.data_processing import INTERPOLATION_METHODS, preprocess_df
 
@@ -58,7 +59,6 @@ def load_mihaela_service_df(
         all_dfs.append(df_pivot)
 
     final_df = pd.concat(all_dfs, axis=0)
-    print(final_df.columns)
     return final_df
 
 
@@ -71,7 +71,7 @@ def load_mihaela_service_training_data(
     clean: bool = False,
     scaler=None,
     interpolate_method: Optional[INTERPOLATION_METHODS] = None,
-):
+) -> Tuple[torch.Tensor, torch.Tensor | None]:
     """
     Load the training data for the given service from Mihaela dataset.
     Args:
