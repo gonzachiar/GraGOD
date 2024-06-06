@@ -1,7 +1,10 @@
 import os
-from typing import Tuple
+from typing import Optional, Tuple
 
 import pandas as pd
+import torch
+
+from datasets.data_processing import INTERPOLATION_METHODS, preprocess_df
 
 BASE_PATH_DEFAULT = "../datasets_files/swat"
 NAME_TRAIN_DEFAULT = "SWaT_data_train.csv"
@@ -80,3 +83,56 @@ def load_swat_df(
     )
 
     return df_train, df_train_labels, df_val, df_val_labels, df_test, df_test_labels
+
+
+def load_swat_training_data(
+    path_to_dataset: str = BASE_PATH_DEFAULT,
+    normalize: bool = False,
+    clean: bool = False,
+    scaler=None,
+    interpolate_method: Optional[INTERPOLATION_METHODS] = None,
+) -> Tuple[torch.Tensor, ...]:
+    """
+    Loads the training dataset from the given path and returns a pandas DataFrame.
+    Args:
+        path_to_dataset: Path to the dataset files.
+        normalize: Whether to normalize the data. Default is False.
+        clean: Whether to clean the data. Default is False.
+        scaler: The scaler to use for normalization.
+        interpolate_method: The method to use for interpolation.
+    Returns:
+        A pandas DataFrame containing the training dataset.
+    """
+    (
+        df_train,
+        df_train_labels,
+        df_val,
+        df_val_labels,
+        df_test,
+        df_test_labels,
+    ) = load_swat_df(path_to_dataset=path_to_dataset)
+    X_train, X_train_labels = preprocess_df(
+        data_df=df_train,
+        labels_df=df_train_labels,
+        normalize=normalize,
+        clean=clean,
+        scaler=scaler,
+        interpolate_method=interpolate_method,
+    )
+    X_val, X_val_labels = preprocess_df(
+        data_df=df_val,
+        labels_df=df_val_labels,
+        normalize=normalize,
+        clean=clean,
+        scaler=scaler,
+        interpolate_method=interpolate_method,
+    )
+    X_test, X_test_labels = preprocess_df(
+        data_df=df_test,
+        labels_df=df_test_labels,
+        normalize=normalize,
+        clean=clean,
+        scaler=scaler,
+        interpolate_method=interpolate_method,
+    )
+    return X_train, X_train_labels, X_val, X_val_labels, X_test, X_test_labels
