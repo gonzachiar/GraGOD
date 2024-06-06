@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 import pandas as pd
 import torch
 
-from datasets.data_processing import INTERPOLATION_METHODS, preprocess_df
+from datasets.data_processing import InterPolationMethods, preprocess_df
 
 BASE_PATH_DEFAULT = "datasets_files/telco"
 
@@ -66,7 +66,7 @@ def load_telco_training_data(
     normalize: bool = False,
     clean: bool = False,
     scaler=None,
-    interpolate_method: Optional[INTERPOLATION_METHODS] = None,
+    interpolate_method: Optional[InterPolationMethods] = None,
 ) -> Tuple[torch.Tensor, ...]:
     """
     Load the data for the telco dataset, splitted into train, val and test.
