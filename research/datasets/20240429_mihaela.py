@@ -2,11 +2,13 @@
 import os
 
 import numpy as np
-
+# %%
+os.getcwd()
+#%%
 day_str = "20190501"
 city_str = "Nancy"
 app_str = "YouTube"
-path_to_datasets = "../../datasets_files"
+path_to_datasets = "../../datasets_files/mihaela"
 city_dims = (151, 165)
 
 traffic_file_dn = os.path.join(
@@ -133,11 +135,53 @@ for day_str, traffic_file_dn in zip(days_str, all_trafic_files_service):
 
 # Concatenate all dataframes along the index (time)
 final_df = pd.concat(all_dfs, axis=0)
-
-# %%
 final_df
-#
 
 # %%
-final_df["time"]
+# %%
+import networkx as nx
+import random
+
+# Initialize the graph
+G = nx.Graph()
+for index, row in final_df[:10].iterrows():
+    for tile_id, traffic_value in row.items():
+        if tile_id == 'time':
+            continue
+        tile_id = int(tile_id)
+        row_index = tile_id // n_cols
+        col_index = tile_id % n_cols
+        node = (row_index, col_index)
+        
+        # Add node with traffic value as attribute
+        G.add_node(node, traffic=traffic_value)
+
+        for adj in [(row_index - 1, col_index), (row_index + 1, col_index), (row_index, col_index - 1), (row_index, col_index + 1)]:
+            if adj in G.nodes:
+                G.add_edge(node, adj)
+
+
+# Randomly sample a subset of nodes to visualize
+sample_size = 1000  # Number of nodes to sample, adjust as necessary
+sampled_nodes = random.sample(list(G.nodes), sample_size)
+# Create a subgraph with the sampled nodes and their immediate neighbors
+print(G)
+subG = G.subgraph(sampled_nodes).copy()
+for node in sampled_nodes:
+    try:
+        subG.nodes[node]["traffic"]
+    except:
+        print("no traffic")
+
+for node in sampled_nodes:
+    # Look at each neighbor in the original graph
+    for neighbor in G.neighbors(node):
+        if neighbor in sampled_nodes:
+            # Add edge only if both nodes are in the sampled set
+            subG.add_edge(node, neighbor)
+print(subG)
+# Visualize the subgraph
+pos = {node: (node[1], -node[0]) for node in subG.nodes}  # Position nodes based on their grid coordinates
+nx.draw(subG, pos, node_color=[subG.nodes[n]['traffic'] for n in subG.nodes], cmap=plt.cm.viridis)
+plt.show()
 # %%
