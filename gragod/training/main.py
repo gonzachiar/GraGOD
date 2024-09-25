@@ -1,5 +1,6 @@
 import json
-from typing import Literal, Optional
+from enum import Enum
+from typing import Optional
 
 import torch
 import yaml
@@ -7,7 +8,10 @@ from sklearn.model_selection import train_test_split
 
 from gragod import DATASETS, INTERPOLATION_METHODS
 
-PARAM_FILE_TYPE = Literal["yaml", "json"]
+
+class ParamFileTypes(Enum):
+    YAML = "yaml"
+    JSON = "json"
 
 
 def _split_train_val_test(
@@ -38,7 +42,15 @@ def _split_train_val_test(
     return X_train, X_val, X_test, Y_train, Y_val, Y_test
 
 
-def load_params(base_path: str, type: PARAM_FILE_TYPE) -> dict:
+def load_params(base_path: str, type: ParamFileTypes) -> dict:
+    """
+    Load the parameters from the given file.
+    Args:
+        base_path: The path to the parameters file.
+        type: The enum with the type of the parameters file.
+    Returns:
+        The parameters as a dictionary.
+    """
     if type == "yaml":
         with open(base_path, "r") as yaml_file:
             params = yaml.safe_load(yaml_file)
@@ -46,7 +58,7 @@ def load_params(base_path: str, type: PARAM_FILE_TYPE) -> dict:
         with open(base_path, "r") as json_file:
             params = json.load(json_file)
     else:
-        raise ValueError(f"Type must be one of {PARAM_FILE_TYPE}")
+        raise ValueError(f"Type must be one of {ParamFileTypes.__members__.keys()}")
 
     return params
 

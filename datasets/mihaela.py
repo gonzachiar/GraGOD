@@ -1,14 +1,14 @@
 import datetime
 import os
 from enum import Enum
-from typing import List, Literal, Optional
+from typing import List, Optional, Tuple
 
 import networkx as nx
 import pandas as pd
+import torch
 
-from datasets.data_processing import INTERPOLATION_METHODS, preprocess_df
+from datasets.data_processing import InterPolationMethods, preprocess_df
 
-CITIES = Literal["Nancy"]
 BASE_PATH_DEFAULT = "datasets_files/mihaela"
 DEFAULT_DATES = [str(day) for day in range(20190501, 20190532)]
 
@@ -18,15 +18,19 @@ class SuffixName(Enum):
     UL = "UL"
 
 
+class Cities(Enum):
+    Nancy = "Nancy"
+
+
 def load_mihaela_service_df(
     service_name: str = "Clash_of_Clans",
     dates: List[str] = DEFAULT_DATES,
     base_path: str = BASE_PATH_DEFAULT,
-    city_name: CITIES = "Nancy",
+    city_name: Cities = Cities.Nancy,
     suffix_name: SuffixName = SuffixName.DL,
 ) -> pd.DataFrame:
     """
-    Loads the service data for a given city and service.
+    Loads the service data for a given city, service and suffix.
     Args:
         service_name: The name of the service.
         dates: The list of dates to load.
@@ -37,6 +41,7 @@ def load_mihaela_service_df(
         The DataFrame with the service data. In the first column is the
         is the time, in the other columns are the traffic values for each tile_id.
     """
+    city_name = city_name.value
     all_dfs = []
     for day_str in dates:
         traffic_file = os.path.join(
@@ -69,24 +74,25 @@ def load_mihaela_service_training_data(
     service_name: str,
     dates: List[str] = DEFAULT_DATES,
     base_path: str = BASE_PATH_DEFAULT,
-    city_name: CITIES = "Nancy",
+    city_name: Cities = Cities.Nancy,
     normalize: bool = False,
     clean: bool = False,
     scaler=None,
-    interpolate_method: Optional[INTERPOLATION_METHODS] = None,
-):
+    interpolate_method: Optional[InterPolationMethods] = None,
+) -> Tuple[torch.Tensor, torch.Tensor | None]:
     """
     Load the training data for the given service from Mihaela dataset.
     Args:
         service_name: The name of the service.
         dates: The list of dates to load.
         base_path: The path to the datasets.
-        city_name: The name of the city.
+        city_name: The enum of the city.
         normalize: Whether to normalize the data. Default is False.
         clean: Whether to clean the data. Default is False.
         scaler: The scaler to use for normalization.
         interpolate_method: The method to use for interpolation.
     """
+    city_name = city_name.value
     df = load_mihaela_service_df(
         service_name=service_name,
         dates=dates,
