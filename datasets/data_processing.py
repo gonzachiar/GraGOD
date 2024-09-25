@@ -1,4 +1,5 @@
-from typing import Literal, Optional, Tuple
+from enum import Enum
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -7,7 +8,10 @@ from sklearn.preprocessing import MinMaxScaler
 
 # from sklearn.impute import KNNImputer, SimpleImputer
 
-INTERPOLATION_METHODS = Literal["linear", "spline"]
+
+class InterPolationMethods(Enum):
+    LINEAR = "linear"
+    SPLINE = "spline"
 
 
 def convert_df_to_tensor(df: pd.DataFrame) -> np.ndarray:
@@ -25,21 +29,22 @@ def convert_df_to_tensor(df: pd.DataFrame) -> np.ndarray:
 
 
 def interpolate_data(
-    data: np.ndarray, method: Optional[INTERPOLATION_METHODS] = None
+    data: np.ndarray, method: Optional[InterPolationMethods] = None
 ) -> np.ndarray:
     """
     Interpolate the missing values in the given data.
     Args:
         data: The data to interpolate.
-        method: The interpolation method to use. Default is "spline".
+        method: The interpolation method to use. Default is InterPolationMethods.SPLINE.
     Returns:
         The interpolated data.
     """
 
-    method = method or "spline"
+    method_str = (method or InterPolationMethods.SPLINE).value
+
     df = pd.DataFrame(data)
 
-    df.interpolate(method=method, inplace=True, order=3)
+    df.interpolate(method=method_str, inplace=True, order=3)
     interpolated_data = df.to_numpy()
 
     return interpolated_data
@@ -73,7 +78,7 @@ def preprocess_df(
     normalize: bool = False,
     clean: bool = False,
     scaler=None,
-    interpolate_method: Optional[INTERPOLATION_METHODS] = None,
+    interpolate_method: Optional[InterPolationMethods] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor | None]:
     """
     Preprocess the given data DataFrame.
