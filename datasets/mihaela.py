@@ -1,13 +1,13 @@
 import datetime
 import os
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import networkx as nx
 import pandas as pd
 import torch
 
-from datasets.data_processing import INTERPOLATION_METHODS, preprocess_df
+from datasets.data_processing import InterPolationMethods, preprocess_df
 
 BASE_PATH_DEFAULT = "datasets_files/mihaela"
 DEFAULT_DATES = [str(day) for day in range(20190501, 20190532)]
@@ -27,9 +27,10 @@ def load_mihaela_service_df(
     dates: List[str] = DEFAULT_DATES,
     base_path: str = BASE_PATH_DEFAULT,
     city_name: Cities = Cities.Nancy,
+    suffix_name: SuffixName = SuffixName.DL,
 ) -> pd.DataFrame:
     """
-    Loads the service data for a given city and service.
+    Loads the service data for a given city, service and suffix.
     Args:
         service_name: The name of the service.
         dates: The list of dates to load.
@@ -77,7 +78,7 @@ def load_mihaela_service_training_data(
     normalize: bool = False,
     clean: bool = False,
     scaler=None,
-    interpolate_method: Optional[INTERPOLATION_METHODS] = None,
+    interpolate_method: Optional[InterPolationMethods] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor | None]:
     """
     Load the training data for the given service from Mihaela dataset.
@@ -138,9 +139,7 @@ def load_all_services(
     return all_data
 
 
-def create_graph(
-    df: pd.DataFrame, city_dims: tuple[int, int] = (151, 165)
-) -> nx.Graph:
+def create_graph(df: pd.DataFrame, city_dims: tuple[int, int] = (151, 165)) -> nx.Graph:
     """
     Creates a graph from the DataFrame. Each tile_id is a node and the edges are
     created between the nodes that are next to each other.
