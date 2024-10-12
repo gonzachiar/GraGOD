@@ -1,88 +1,119 @@
-import torch
+import argparse
+
 from torch import nn
 from torch.utils.data import DataLoader
 
-from gragod.training import load_params, load_training_data
+from datasets.config import get_dataset_config
+from gragod import InterPolationMethods, ParamFileTypes
+from gragod.training import load_params, load_training_data, set_seeds
+from gragod.types import cast_dataset
 from models.mtad_gat.dataset import SlidingWindowDataset
 from models.mtad_gat.model import MTAD_GAT
-from models.mtad_gat.trainer import Trainer
+from models.mtad_gat.trainer_pl import TrainerPL
 
-DATA_PATH = "data"
-PARAMS_FILE = "models/mtad_gat/params.yaml"
 RANDOM_SEED = 42
 
 
-def main(params: dict):
+set_seeds(RANDOM_SEED)
+
+
+def main(
+    dataset_name: str,
+    model_params: dict,
+    test_size: float = 0.1,
+    val_size: float = 0.1,
+    clean: bool = True,
+    interpolate_method: InterPolationMethods | None = None,
+    batch_size: int = 264,
+    n_workers: int = 0,
+    init_lr: float = 0.001,
+    n_epochs: int = 30,
+    target_dims: int | None = None,
+    device: str = "mps",
+    params: dict = {},
+    log_dir: str = "output",
+    ckpt_path: str | None = None,
+):
+    dataset = cast_dataset(dataset_name)
+    dataset_config = get_dataset_config(dataset=dataset)
+
     # Load data
     X_train, X_val, *_ = load_training_data(
-        dataset=params["dataset"],
-        test_size=params["train_params"]["test_size"],
-        val_size=params["train_params"]["val_size"],
-        shuffle=params["train_params"]["shuffle"],
-        normalize=params["train_params"]["normalize_data"],
-        clean=params["train_params"]["clean_data"],
-        interpolate_method=params["train_params"]["interpolate_method"],
+        dataset=dataset,
+        test_size=test_size,
+        val_size=val_size,
+        normalize=dataset_config.normalize,
+        clean=clean,
+        interpolate_method=interpolate_method,
         random_state=RANDOM_SEED,
     )
 
     # Create dataloaders
-    window_size = params["train_params"]["window_size"]
-    batch_size = params["train_params"]["batch_size"]
+    window_size = model_params["window_size"]
+    batch_size = batch_size
 
-    train_dataset = SlidingWindowDataset(X_train, window_size, target_dim=None)
-    val_dataset = SlidingWindowDataset(X_val, window_size, target_dim=None)
+    train_dataset = SlidingWindowDataset(X_train, window_size)
+    val_dataset = SlidingWindowDataset(X_val, window_size)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        num_workers=n_workers,
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        num_workers=n_workers,
+    )
 
     # Create model
     n_features = X_train.shape[1]
     out_dim = X_train.shape[1]
 
     model = MTAD_GAT(
-        n_features,
-        window_size,
-        out_dim,
-        dropout=params["train_params"]["dropout"],
-        **params["model_params"],
-    )
-    if params["train_params"]["weights_path"]:
-        state_dict = torch.load(
-            params["train_params"]["weights_path"], map_location=torch.device("cpu")
-        )
-        model.load_state_dict(state_dict)
-    # lr = params["train_params"]["lr"]
-    # target_dims = params["train_params"]["target_dims"]
-    # n_epochs = params["train_params"]["n_epochs"]
-    # init_lr = params["train_params"]["init_lr"]
-    # use_cuda = params["train_params"]["use_cuda"]
-    # save_path = params["train_params"]["save_path"]
-    # print_every = params["train_params"]["print_every"]
-    # log_tensorboard = params["train_params"]["log_tensorboard"]
-    # args_summary = params["train_params"]["args_summary"]
-    # log_dir = params["train_params"]["log_dir"]
-
-    # Create optimizer and loss function
-    optimizer = torch.optim.Adam(model.parameters(), lr=params["train_params"]["lr"])
-    forecast_criterion = nn.MSELoss()
-    recon_criterion = nn.MSELoss()
-
-    # Create trainer
-    trainer = Trainer(
-        model=model,
-        optimizer=optimizer,
         n_features=n_features,
-        forecast_criterion=forecast_criterion,
-        recon_criterion=recon_criterion,
-        **params["train_params"],
+        out_dim=out_dim,
+        **model_params,
     )
+    args_summary = {
+        "dataset": dataset,
+        "data_params": params["data_params"],
+        "model_params": model_params,
+        "train_params": params["train_params"],
+        "predictor_params": params["predictor_params"],
+    }
+
+    trainer = TrainerPL(
+        model=model,
+        model_params=params["model_params"],
+        target_dims=target_dims,
+        init_lr=init_lr,
+        forecast_criterion=nn.MSELoss(),
+        recon_criterion=nn.MSELoss(),
+        batch_size=batch_size,
+        n_epochs=n_epochs,
+        device=device,
+        log_dir=log_dir,
+    )
+    if ckpt_path:
+        trainer.load(ckpt_path)
 
     # Train model
-    trainer.fit(train_loader, val_loader)
+    trainer.fit(train_loader, val_loader, args_summary=args_summary)
     # TODO: Save model and prediction in the proper folder
 
 
 if __name__ == "__main__":
-    params = load_params(PARAMS_FILE, type="yaml")
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--params_file", type=str, default="models/mtad_gat/params.yaml"
+    )
+    args = parser.parse_args()
+    params = load_params(args.params_file, file_type=ParamFileTypes.YAML)
 
-    main(params)
+    main(
+        dataset_name=params["dataset"],
+        **params["train_params"],
+        model_params=params["model_params"],
+        params=params,
+    )

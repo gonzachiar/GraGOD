@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 import torch.nn as nn
 
@@ -56,7 +54,7 @@ class FeatureAttentionLayer(nn.Module):
         window_size: int,
         dropout: float,
         alpha: float,
-        embed_dim: Optional[int] = None,
+        embed_dim: int | None = None,
         use_gatv2: bool = True,
         use_bias: bool = True,
     ):
@@ -184,7 +182,7 @@ class TemporalAttentionLayer(nn.Module):
         window_size: int,
         dropout: float,
         alpha: float,
-        embed_dim: Optional[int] = None,
+        embed_dim: int | None = None,
         use_gatv2: bool = True,
         use_bias: bool = True,
     ):

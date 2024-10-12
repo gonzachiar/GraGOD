@@ -3,11 +3,12 @@ dataset: "telco"
 data_params:
   data_dir: "data/"
   group: "1-1"
-  lookback: 100
+  lookback: 5
   normalize: true
   spec_res: false
 
 model_params:
+  window_size: 4
   kernel_size: 7
   use_gatv2: true
   feat_gat_embed_dim: null
@@ -18,35 +19,27 @@ model_params:
   forecast_hid_dim: 300
   recon_n_layers: 1
   recon_hid_dim: 300
+  dropout: 0.3
   alpha: 0.2
 
 train_params:
-  window_size: 100
-  n_epochs: 100
+  n_epochs: 30
   batch_size: 264
   init_lr: 0.001
-  lr: 0.0001
-  shuffle_dataset: true
-  dropout: 0.3
-  dload: "output/mtad_gat"
+  # dload: "output/mtad_gat"
   device: "mps"
-  print_every: 1
-  log_tensorboard: true
-  save_path: "output/mtad_gat"
-  target_dims: 1
-  args_summary: "args_summary"
-  log_dir: "output/mtad_gat"
-  weights_path: null
+  n_workers: 0
+  target_dims: null
+  log_dir: "output"
+  ckpt_path: null
   test_size: 0.1
   val_size: 0.1
-  shuffle: true
-  normalize_data: false
-  clean_data: true
+  clean: true # remove anomalies from training data
   interpolate_method: null
 
 predictor_params:
   dataset: "custom"
-  target_dims: 1
+  target_dims: null
   scale_scores: false
   level: 0.9999 
   q: 0.001
