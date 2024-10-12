@@ -1,19 +1,18 @@
-from enum import Enum
-from typing import Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
 import torch
 from sklearn.preprocessing import MinMaxScaler
 
+from gragod import InterPolationMethods
+
 # from sklearn.impute import KNNImputer, SimpleImputer
 
 
-class InterPolationMethods(Enum):
-    LINEAR = "linear"
-    SPLINE = "spline"
-
-
+# TODO:
+#   - Check if swat labels are working, missing timestamps
+#   - Improve data cleaning
 def convert_df_to_tensor(df: pd.DataFrame) -> np.ndarray:
     """
     Convert a pandas DataFrame to a numpy array, exluding the timestamps.
@@ -29,7 +28,7 @@ def convert_df_to_tensor(df: pd.DataFrame) -> np.ndarray:
 
 
 def interpolate_data(
-    data: np.ndarray, method: Optional[InterPolationMethods] = None
+    data: np.ndarray, method: InterPolationMethods | None = None
 ) -> np.ndarray:
     """
     Interpolate the missing values in the given data.
@@ -74,11 +73,11 @@ def normalize_data(data, scaler=None) -> Tuple[np.ndarray, MinMaxScaler]:
 
 def preprocess_df(
     data_df: pd.DataFrame,
-    labels_df: Optional[pd.DataFrame] = None,
+    labels_df: pd.DataFrame | None = None,
     normalize: bool = False,
     clean: bool = False,
     scaler=None,
-    interpolate_method: Optional[InterPolationMethods] = None,
+    interpolate_method: InterPolationMethods | None = None,
 ) -> Tuple[torch.Tensor, torch.Tensor | None]:
     """
     Preprocess the given data DataFrame.

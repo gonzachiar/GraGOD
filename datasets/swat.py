@@ -1,19 +1,17 @@
 import os
-from typing import Optional, Tuple
+from typing import Tuple
 
 import pandas as pd
 import torch
 
-from datasets.data_processing import INTERPOLATION_METHODS, preprocess_df
-
-BASE_PATH_DEFAULT = "../datasets_files/swat"
-NAME_TRAIN_DEFAULT = "SWaT_data_train.csv"
-NAME_VAL_DEFAULT = "SWaT_data_val.csv"
+from datasets.config import SWATPaths
+from datasets.data_processing import InterPolationMethods, preprocess_df
 
 
 def load_swat_df_train(
-    name: str = NAME_TRAIN_DEFAULT, path_to_dataset: str = BASE_PATH_DEFAULT
-) -> Tuple[pd.DataFrame]:
+    name: str = SWATPaths.NAME_TRAIN.value,
+    path_to_dataset: str = SWATPaths.BASE_PATH.value,
+) -> Tuple[pd.DataFrame, pd.Series]:
     """
     Loads the training dataset from the given path and returns a pandas DataFrame.
     Args:
@@ -25,12 +23,14 @@ def load_swat_df_train(
     df_train = pd.read_csv(file)
     df_train_labels = (df_train["Normal/Attack"] == "Attack").astype(int)
     df_train = df_train.drop(columns=["Normal/Attack"])
+
     return df_train, df_train_labels
 
 
 def load_swat_df_val(
-    name: str = NAME_VAL_DEFAULT, path_to_dataset: str = BASE_PATH_DEFAULT
-) -> Tuple[pd.DataFrame]:
+    name: str = SWATPaths.NAME_VAL.value,
+    path_to_dataset: str = SWATPaths.BASE_PATH.value,
+) -> Tuple[pd.DataFrame, pd.Series]:
     """
     Loads the validation dataset from the given path and returns a pandas DataFrame.
     Args:
@@ -66,8 +66,8 @@ def split_val_df(
 
 
 def load_swat_df(
-    path_to_dataset: str = BASE_PATH_DEFAULT, val_size: int = 0.6
-) -> Tuple[pd.DataFrame]:
+    path_to_dataset: str = SWATPaths.BASE_PATH.value, val_size: float = 0.6
+) -> Tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
     """
     Loads the dataset from the given path and returns a pandas DataFrame.
     Args:
@@ -86,11 +86,11 @@ def load_swat_df(
 
 
 def load_swat_training_data(
-    path_to_dataset: str = BASE_PATH_DEFAULT,
+    path_to_dataset: str = SWATPaths.BASE_PATH.value,
     normalize: bool = False,
     clean: bool = False,
     scaler=None,
-    interpolate_method: Optional[INTERPOLATION_METHODS] = None,
+    interpolate_method: InterPolationMethods | None = None,
 ) -> Tuple[torch.Tensor, ...]:
     """
     Loads the training dataset from the given path and returns a pandas DataFrame.
@@ -123,7 +123,7 @@ def load_swat_training_data(
         data_df=df_val,
         labels_df=df_val_labels,
         normalize=normalize,
-        clean=clean,
+        clean=False,
         scaler=scaler,
         interpolate_method=interpolate_method,
     )
@@ -131,7 +131,7 @@ def load_swat_training_data(
         data_df=df_test,
         labels_df=df_test_labels,
         normalize=normalize,
-        clean=clean,
+        clean=False,
         scaler=scaler,
         interpolate_method=interpolate_method,
     )

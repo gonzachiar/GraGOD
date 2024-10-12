@@ -1,7 +1,7 @@
 import datetime
 import os
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import networkx as nx
 import pandas as pd
@@ -78,7 +78,7 @@ def load_mihaela_service_training_data(
     normalize: bool = False,
     clean: bool = False,
     scaler=None,
-    interpolate_method: Optional[InterPolationMethods] = None,
+    interpolate_method: InterPolationMethods | None = None,
 ) -> Tuple[torch.Tensor, torch.Tensor | None]:
     """
     Load the training data for the given service from Mihaela dataset.
