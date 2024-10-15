@@ -3,7 +3,6 @@ import json
 import pytorch_lightning as pl
 import torch
 import yaml
-from numpy.typing import ArrayLike
 
 from datasets import load_swat_training_data, load_telco_training_data
 from gragod import Datasets, InterPolationMethods, ParamFileTypes
@@ -13,46 +12,16 @@ logger = get_logger()
 
 
 def set_seeds(seed):
+    """
+    Set the seeds for the random number generators on pytorch, numpy and python.
+    Args:
+        seed: The seed to set.
+    """
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     # torch.backends.cudnn.benchmark = False
     pl.seed_everything(seed, workers=True)
-
-
-def _split_train_val_test(
-    X: torch.Tensor,
-    Y: torch.Tensor | None,
-    groups: ArrayLike | None,
-    test_size: float = 0.1,
-    val_size: float = 0.1,
-    shuffle: bool = True,
-    random_state: int = 42,
-):
-    # https://rasbt.github.io/mlxtend/user_guide/evaluate/GroupTimeSeriesSplit/#example-1-multiple-training-groups-with-train-size-specified
-    # fmt: off
-    # import ipdb; from pprint import pprint as pp; ipdb.set_trace(context=10);
-    # fmt: on
-
-    # X_train, X_test, Y_train, Y_test = train_test_split(
-    #     X,
-    #     Y,
-    #     test_size=test_size,
-    #     shuffle=shuffle,
-    #     random_state=random_state,
-    #     stratify=Y,
-    # )
-    # X_train, X_val, Y_train, Y_val = train_test_split(
-    #     X_train,
-    #     Y_train,
-    #     test_size=val_size,
-    #     shuffle=shuffle,
-    #     random_state=random_state,
-    #     stratify=Y_train,
-    # )
-
-    # return X_train, X_val, X_test, Y_train, Y_val, Y_test
-    pass
 
 
 def load_params(base_path: str, file_type: ParamFileTypes) -> dict:
@@ -80,12 +49,22 @@ def load_training_data(
     dataset: Datasets,
     test_size: float = 0.1,
     val_size: float = 0.1,
-    shuffle: bool = True,
-    random_state: int = 42,
     normalize: bool = False,
     clean: bool = False,
     interpolate_method: InterPolationMethods | None = None,
 ):
+    """
+    Load the training data for the given dataset.
+    Args:
+        dataset: The dataset to load.
+        test_size: The size of the test set, from 0 to 1.
+        val_size: The size of the validation set, from 0 to 1.
+        normalize: Whether to normalize the data.
+        clean: Whether to remove anomalies from the data.
+        interpolate_method: The method to use to interpolate the missing values.
+    Returns:
+        The training, validation and test data as torch tensors.
+    """
     # TODO:
     # - Fix datasets loading path
     # - Load all services in Miahela

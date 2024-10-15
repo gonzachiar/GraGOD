@@ -33,6 +33,7 @@ def main(
     params: dict = {},
     log_dir: str = "output",
     ckpt_path: str | None = None,
+    log_every_n_steps: int = 1,
 ):
     dataset = cast_dataset(dataset_name)
     dataset_config = get_dataset_config(dataset=dataset)
@@ -45,7 +46,6 @@ def main(
         normalize=dataset_config.normalize,
         clean=clean,
         interpolate_method=interpolate_method,
-        random_state=RANDOM_SEED,
     )
 
     # Create dataloaders
@@ -94,6 +94,7 @@ def main(
         n_epochs=n_epochs,
         device=device,
         log_dir=log_dir,
+        log_every_n_steps=log_every_n_steps,
     )
     if ckpt_path:
         trainer.load(ckpt_path)

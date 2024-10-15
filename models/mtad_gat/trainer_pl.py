@@ -12,8 +12,27 @@ from pytorch_lightning.loggers import TensorBoardLogger
 
 from gragod import PathType
 
+# TODO:
+# - Check if the PL Trainer can be used for all models
+
 
 class MTAD_GAT_PLModule(pl.LightningModule):
+    """
+    PyTorch Lightning module for the MTAD-GAT model.
+
+    This module encapsulates the MTAD-GAT model and defines the training, validation,
+    and optimization procedures using PyTorch Lightning.
+
+    Args:
+        model: The MTAD-GAT model instance.
+        model_params: Dictionary containing model parameters.
+        target_dims: The target dimensions to predict. If None, predict all dimensions.
+        init_lr: Initial learning rate for the optimizer.
+        forecast_criterion: Loss function for forecasting.
+        recon_criterion: Loss function for reconstruction.
+        checkpoint_cb: ModelCheckpoint callback for saving best models.
+    """
+
     def __init__(
         self,
         model: nn.Module,
@@ -139,11 +158,33 @@ class MTAD_GAT_PLModule(pl.LightningModule):
                 self._register_best_metrics()
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.init_lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.init_lr)  # type: ignore
         return optimizer
 
 
 class TrainerPL:
+    """
+    Trainer class for the MTAD-GAT model using PyTorch Lightning.
+
+    This class sets up the training environment, including callbacks, loggers,
+    and the PyTorch Lightning Trainer.
+
+    Args:
+        model: The MTAD-GAT model instance.
+        model_params: Dictionary containing model parameters.
+        n_epochs: Number of training epochs.
+        batch_size: Batch size for training and validation.
+        target_dims: The target dimensions to focus on. If None, use all dimensions.
+        init_lr: Initial learning rate for the optimizer.
+        forecast_criterion: Loss function for forecasting.
+        recon_criterion: Loss function for reconstruction.
+        device: Device to use for training ('cpu' or 'cuda').
+        log_dir: Directory for saving logs and checkpoints.
+        print_every: Frequency of logging steps.
+        log_tensorboard: Whether to use TensorBoard logging.
+        callbacks: Additional callbacks for the Trainer.
+    """
+
     def __init__(
         self,
         model: nn.Module,
@@ -156,13 +197,17 @@ class TrainerPL:
         recon_criterion: torch.nn.Module = nn.MSELoss(),
         device: str = "cpu",
         log_dir: str = "output/",
-        print_every: int = 1,
-        log_tensorboard: bool = True,
         callbacks: list = [],
+        log_every_n_steps: int = 1,
         *args,
         **kwargs,
     ):
-        # callbacks
+        self.n_epochs = n_epochs
+        self.batch_size = batch_size
+        self.device = device
+        self.log_dir = log_dir
+        self.log_every_n_steps = log_every_n_steps
+        # Define callbacks
         self.early_stop = EarlyStopping(
             monitor="Total_loss/val",
             min_delta=0.0001,
@@ -179,6 +224,7 @@ class TrainerPL:
         )
         self.lr_monitor = LearningRateMonitor(logging_interval="step")
         callbacks = [self.early_stop, self.checkpoint, self.lr_monitor]
+        self.callbacks = callbacks
 
         self.lightning_module = MTAD_GAT_PLModule(
             model=model,
@@ -193,18 +239,10 @@ class TrainerPL:
             callbacks=callbacks,
             checkpoint_cb=self.checkpoint,
         )
-        self.n_epochs = n_epochs
-        self.batch_size = batch_size
-        self.device = device
-        self.log_dir = log_dir
-        self.print_every = print_every
-        self.log_tensorboard = log_tensorboard
-        self.callbacks = callbacks
 
-        if self.log_tensorboard:
-            self.logger = TensorBoardLogger(
-                save_dir=log_dir, name="mtad_gat", default_hp_metric=False
-            )
+        self.logger = TensorBoardLogger(
+            save_dir=log_dir, name="mtad_gat", default_hp_metric=False
+        )
 
     def fit(
         self,
@@ -215,8 +253,8 @@ class TrainerPL:
         trainer = pl.Trainer(
             max_epochs=self.n_epochs,
             accelerator=self.device,
-            logger=self.logger if self.log_tensorboard else None,
-            log_every_n_steps=self.print_every,
+            logger=self.logger,
+            log_every_n_steps=self.log_every_n_steps,
             callbacks=self.callbacks,
         )
 
@@ -229,22 +267,7 @@ class TrainerPL:
         }
         self.logger.log_hyperparams(params=args_summary, metrics=best_metrics)
 
-    # def save(self, file_name: str):
-    #     PATH = os.path.join(self.dload, file_name)
-    #     if not os.path.exists(self.dload):
-    #         os.makedirs(self.dload)
-    #     torch.save(self.lightning_module.model.state_dict(), PATH)
-
     def load(self, path: PathType):
         self.lightning_module.model.load_state_dict(
             torch.load(path, map_location=self.device)
-        )
-
-    def evaluate(self, data_loader: torch.utils.data.DataLoader):
-        trainer = pl.Trainer(accelerator=self.device)
-        results = trainer.test(self.lightning_module, data_loader)
-        return (
-            results[0]["test_loss"],
-            results[0]["test_forecast_loss"],
-            results[0]["test_recon_loss"],
         )

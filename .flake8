@@ -3,4 +3,3 @@ max-line-length=88
 per-file-ignores =
     */__init__.py: F401
     *.py: E203
-    models/mtad_gat/spot.py: E741, E203

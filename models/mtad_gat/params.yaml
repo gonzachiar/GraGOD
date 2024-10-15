@@ -31,6 +31,7 @@ train_params:
   n_workers: 0
   target_dims: null
   log_dir: "output"
+  log_every_n_steps: 1
   ckpt_path: null
   test_size: 0.1
   val_size: 0.1
