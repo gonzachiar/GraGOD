@@ -1,16 +1,15 @@
 import os
-from typing import Optional, Tuple
+from typing import Tuple
 
 import pandas as pd
 import torch
 
+from datasets.config import TELCOPaths
 from datasets.data_processing import InterPolationMethods, preprocess_df
-
-BASE_PATH_DEFAULT = "datasets_files/telco"
 
 
 def load_telco_df(
-    base_path: str | os.PathLike = BASE_PATH_DEFAULT,
+    base_path: str | os.PathLike = TELCOPaths.BASE_PATH.value,
 ) -> Tuple[pd.DataFrame, ...]:
     """
     Load the TELCO datasets as pandas DataFrames from the given path.
@@ -29,7 +28,7 @@ def load_telco_df(
     return df_train, df_train_labels, df_val, df_val_labels, df_test, df_test_labels
 
 
-def load_telco_tp(base_path: str | os.PathLike = BASE_PATH_DEFAULT):
+def load_telco_tp(base_path: str | os.PathLike = TELCOPaths.BASE_PATH.value):
     """
     Load the TELCO datasets as Temporian EventSets from the given path.
     Args:
@@ -62,11 +61,11 @@ def load_telco_tp(base_path: str | os.PathLike = BASE_PATH_DEFAULT):
 
 
 def load_telco_training_data(
-    base_path: str | os.PathLike = BASE_PATH_DEFAULT,
+    base_path: str | os.PathLike = TELCOPaths.BASE_PATH.value,
     normalize: bool = False,
     clean: bool = False,
     scaler=None,
-    interpolate_method: Optional[InterPolationMethods] = None,
+    interpolate_method: InterPolationMethods | None = None,
 ) -> Tuple[torch.Tensor, ...]:
     """
     Load the data for the telco dataset, splitted into train, val and test.
@@ -112,7 +111,9 @@ def load_telco_training_data(
         interpolate_method=interpolate_method,
     )
 
-    # Ignorin typing since is will never be None
+    if X_train_labels is None or X_test_labels is None or X_val_labels is None:
+        raise ValueError("Telco labels are not being loaded.")
+
     return (
         X_train,
         X_val,
@@ -120,4 +121,4 @@ def load_telco_training_data(
         X_train_labels,
         X_val_labels,
         X_test_labels,
-    )  # type: ignore
+    )
