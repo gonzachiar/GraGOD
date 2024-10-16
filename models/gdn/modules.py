@@ -11,7 +11,8 @@ class OutLayer(nn.Module):
     """
     Output layer for the GNN model.
 
-    This layer consists of a series of linear layers, optionally followed by batch normalization and ReLU activation.
+    This layer consists of a series of linear layers, optionally
+    followed by batch normalization and ReLU activation.
     The final layer always outputs a single value.
 
     Attributes:

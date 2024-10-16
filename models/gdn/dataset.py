@@ -27,7 +27,9 @@ class TimeDataset(Dataset):
         x_arr, y_arr = [], []
         labels_arr = []
 
-        slide_win, slide_stride = [self.config[k] for k in ["slide_win", "slide_stride"]]
+        slide_win, slide_stride = [
+            self.config[k] for k in ["slide_win", "slide_stride"]
+        ]
         is_train = self.mode == "train"
 
         node_num, total_time_len = data.shape

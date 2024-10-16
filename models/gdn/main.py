@@ -1,3 +1,4 @@
+import argparse
 import os
 import random
 from datetime import datetime
@@ -6,10 +7,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
-import yaml
 from torch.utils.data import DataLoader, Subset
 
-from models.gdn.datasets import TimeDataset
+from gragod import ParamFileTypes
+from gragod.training import load_params, set_seeds
+from models.gdn.dataset import TimeDataset
 from models.gdn.evaluate import (
     get_best_performance_data,
     get_full_err_scores,
@@ -22,14 +24,40 @@ from models.gdn.train import train
 
 
 class Main:
-    def __init__(self, train_config, model_config, env_config, dataset):
+    """
+    Main class for running the GDN (Graph Deviation Network) model.
 
-        self.train_config = train_config
-        self.env_config = env_config
+    This class handles the initialization, training, and evaluation of the GDN model.
+    It manages data loading, model creation, and result reporting.
+
+    Attributes:
+        train_config (dict): Configuration for training.
+        env_config (dict): Environment configuration.
+        datestr (str): Date string for saving results.
+        device (str): Device to run the model on (CPU/GPU).
+        train_dataloader (DataLoader): DataLoader for training data.
+        val_dataloader (DataLoader): DataLoader for validation data.
+        test_dataloader (DataLoader): DataLoader for test data.
+        model (GDN): The GDN model instance.
+    """
+
+    def __init__(self, params):
+        """
+        Initialize the Main class.
+
+        Args:
+            train_config (dict): Configuration for training.
+            model_config (dict): Configuration for the model.
+            env_config (dict): Environment configuration.
+            dataset (str): Name of the dataset to use.
+        """
+        self.train_config = params["train"]
+        self.env_config = params["env"]
         self.datestr = None
 
-        df_train = pd.read_csv(f"./data/{dataset}/train.csv", index_col=0)
-        df_test = pd.read_csv(f"./data/{dataset}/test.csv", index_col=0)
+        dataset = params["dataset"]
+        df_train = pd.read_csv(f"./datasets_files/{dataset}/train.csv", index_col=0)
+        df_test = pd.read_csv(f"./datasets_files/{dataset}/test.csv", index_col=0)
 
         column_names_list = df_train.columns.tolist()
 
@@ -42,37 +70,45 @@ class Main:
             for ft in column_names_list
         }
 
-        self.device = train_config["device"]
+        self.device = params["train"]["device"]
 
         fc_edge_index = build_loc_net(base_graph_structure, list(column_names_list))
         fc_edge_index = torch.tensor(fc_edge_index, dtype=torch.long)
 
         cfg = {
-            "slide_win": train_config["slide_win"],
-            "slide_stride": train_config["slide_stride"],
+            "slide_win": params["train"]["slide_win"],
+            "slide_stride": params["train"]["slide_stride"],
         }
 
         train_dataset = TimeDataset(df_train, fc_edge_index, mode="train", config=cfg)
         test_dataset = TimeDataset(df_test, fc_edge_index, mode="test", config=cfg)
 
-        self.train_dataloader, self.val_dataloader, self.test_dataloader = self.get_loaders(
-            train_dataset,
-            test_dataset,
-            train_config["batch"],
-            val_ratio=train_config["val_ratio"],
+        self.train_dataloader, self.val_dataloader, self.test_dataloader = (
+            self.get_loaders(
+                train_dataset,
+                test_dataset,
+                params["train"]["batch"],
+                val_ratio=params["train"]["val_ratio"],
+            )
         )
 
         self.model = GDN(
             [fc_edge_index],
             len(column_names_list),
-            dim=model_config["dim"],
-            input_dim=train_config["slide_win"],
-            out_layer_num=model_config["out_layer_num"],
-            out_layer_inter_dim=model_config["out_layer_inter_dim"],
-            topk=model_config["topk"],
+            dim=params["model"]["dim"],
+            input_dim=params["train"]["slide_win"],
+            out_layer_num=params["model"]["out_layer_num"],
+            out_layer_inter_dim=params["model"]["out_layer_inter_dim"],
+            topk=params["model"]["topk"],
         ).to(self.device)
 
     def run(self):
+        """
+        Run the main process of training, testing, and evaluating the model.
+
+        This method handles the entire pipeline from loading/training the model
+        to getting the final scores.
+        """
         if len(self.env_config["load_model_path"]) > 0:
             model_save_path = self.env_config["load_model_path"]
         else:
@@ -96,6 +132,18 @@ class Main:
         self.get_score(self.test_result, self.val_result)
 
     def get_loaders(self, train_dataset, test_dataset, batch, val_ratio=0.1):
+        """
+        Create DataLoader objects for train, validation, and test datasets.
+
+        Args:
+            train_dataset (Dataset): The training dataset.
+            test_dataset (Dataset): The test dataset.
+            batch (int): Batch size for DataLoaders.
+            val_ratio (float): Ratio of training data to use for validation.
+
+        Returns:
+            tuple: Contains train_dataloader, val_dataloader, and test_dataloader.
+        """
         dataset_len = int(len(train_dataset))
         train_use_len = int(dataset_len * (1 - val_ratio))
         val_use_len = int(dataset_len * val_ratio)
@@ -119,7 +167,13 @@ class Main:
         return train_dataloader, val_dataloader, test_dataloader
 
     def get_score(self, test_result, val_result):
+        """
+        Calculate and print the model's performance scores.
 
+        Args:
+            test_result (list): Results from testing the model.
+            val_result (list): Results from validating the model.
+        """
         np_test_result = np.array(test_result)
 
         test_labels = np_test_result[2, :, 0].tolist()
@@ -127,7 +181,9 @@ class Main:
         test_scores, normal_scores = get_full_err_scores(test_result, val_result)
 
         top1_best_info = get_best_performance_data(test_scores, test_labels, topk=1)
-        top1_val_info = get_val_performance_data(test_scores, normal_scores, test_labels, topk=1)
+        top1_val_info = get_val_performance_data(
+            test_scores, normal_scores, test_labels, topk=1
+        )
 
         print("\n=========================** Result **============================\n")
 
@@ -142,7 +198,12 @@ class Main:
         print(f"recall: {info[2]}\n")
 
     def get_save_path(self):
+        """
+        Generate paths for saving the model and results.
 
+        Returns:
+            list: Contains paths for saving the model and results.
+        """
         dir_path = self.env_config["save_path"]
 
         if self.datestr is None:
@@ -151,7 +212,7 @@ class Main:
         datestr = self.datestr
 
         paths = [
-            f"./pretrained/{dir_path}/best_{datestr}.pt",
+            f"./saved_models/{dir_path}/best_{datestr}.pt",
             f"./results/{dir_path}/{datestr}.csv",
         ]
 
@@ -162,31 +223,15 @@ class Main:
         return paths
 
 
-def set_seeds(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.benchmark = False
-    torch.backends.cudnn.deterministic = True
-    os.environ["PYTHONHASHSEED"] = str(seed)
-
-
 if __name__ == "__main__":
-    # Load configuration from YAML file
-    with open("models/gdn/params.yaml", "r") as config_file:
-        config = yaml.safe_load(config_file)
 
-    train_config = config["train"]
-    model_config = config["model"]
-    env_config = config["env"]
-    dataset = config["dataset"]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--params_file", type=str, default="models/gdn/params.yaml")
+
+    params = load_params("models/gdn/params.yaml", file_type=ParamFileTypes.YAML)
 
     # Set random seeds
-    set_seeds(env_config["random_seed"])
+    set_seeds(params["env"]["random_seed"])
 
-    os.environ["PYTHONHASHSEED"] = str(env_config["random_seed"])
-
-    main = Main(train_config, model_config, env_config, dataset)
+    main = Main(params)
     main.run()
