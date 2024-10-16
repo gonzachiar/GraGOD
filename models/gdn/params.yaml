@@ -1,0 +1,25 @@
+dataset: "msl"
+
+train:
+  batch: 128
+  epoch: 10
+  slide_win: 15
+  slide_stride: 5
+  val_ratio: 0.1
+  decay: 0.0
+  seed: 42
+  device: "cpu"
+  lr: 0.001
+
+model:
+  dim: 64
+  out_layer_num: 1
+  out_layer_inter_dim: 256
+  topk: 20
+
+env:
+  save_path_pattern: ""
+  random_seed: 0
+  report: "val"
+  load_model_path: ""
+  save_path: "msl"
