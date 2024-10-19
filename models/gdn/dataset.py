@@ -1,24 +1,21 @@
+# print all the list and numpy arrays
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 
+np.set_printoptions(threshold=np.inf)
+
 
 class TimeDataset(Dataset):
-    def __init__(self, df, edge_index, mode="train", config=None):
+    def __init__(
+        self, data_tensor, labels_tensor, edge_index, mode="train", config=None
+    ):
         self.config = config
         self.edge_index = edge_index
         self.mode = mode
+        data_tensor = data_tensor.T
 
-        if mode == "train":
-            labels = [0] * len(df)
-            data = df
-        else:
-            labels = df.iloc[:, -1]
-            data = df.drop(columns=["attack"])
-
-        # to tensor
-        data = torch.tensor(data.values.T).double()
-        labels = torch.tensor(labels).double()
-        self.x, self.y, self.labels = self.process(data, labels)
+        self.x, self.y, self.labels = self.process(data_tensor, labels_tensor)
 
     def __len__(self):
         return len(self.x)
@@ -33,7 +30,6 @@ class TimeDataset(Dataset):
         is_train = self.mode == "train"
 
         node_num, total_time_len = data.shape
-
         rang = (
             range(slide_win, total_time_len, slide_stride)
             if is_train

@@ -86,7 +86,10 @@ def get_err_scores(test_res, val_res):
     n_err_mid, n_err_iqr = get_err_median_and_iqr(test_predict, test_gt)
 
     test_delta = np.abs(
-        np.subtract(np.array(test_predict).astype(np.float64), np.array(test_gt).astype(np.float64))
+        np.subtract(
+            np.array(test_predict).astype(np.float64),
+            np.array(test_gt).astype(np.float64),
+        )
     )
     epsilon = 1e-2
 
@@ -181,8 +184,6 @@ def get_best_performance_data(total_err_scores, gt_labels, topk=1):
     topk_indices = np.argpartition(
         total_err_scores, range(total_features - topk - 1, total_features), axis=0
     )[-topk:]
-
-    total_topk_err_scores = []
 
     total_topk_err_scores = np.sum(
         np.take_along_axis(total_err_scores, topk_indices, axis=0), axis=0

@@ -1,23 +1,22 @@
-dataset: "msl"
+dataset: "telco"
 
-train:
-  batch: 128
-  epoch: 10
-  slide_win: 15
-  slide_stride: 5
-  val_ratio: 0.1
-  decay: 0.0
-  seed: 42
+train_params:
+  batch_size: 128
+  n_epochs: 5
+  val_size: 0.1
+  weight_decay: 0.0
   device: "cpu"
-  lr: 0.001
+  init_lr: 0.001
 
-model:
+model_params:
+  window_size: 15
   dim: 64
   out_layer_num: 1
   out_layer_inter_dim: 256
-  topk: 20
+  topk: 5
+  stride: 5
 
-env:
+env_params:
   save_path_pattern: ""
   random_seed: 0
   report: "val"

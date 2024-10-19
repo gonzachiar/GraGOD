@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 
+# print all tensor regardless of length
+torch.set_printoptions(profile="full")
+
 
 def test(model, dataloader, device):
     loss_func = nn.MSELoss(reduction="mean")
@@ -20,13 +23,13 @@ def test(model, dataloader, device):
     i = 0
     acu_loss = 0
     for x, y, labels, edge_index in dataloader:
-        x, y, labels, edge_index = [item.to(device).float() for item in [x, y, labels, edge_index]]
-
+        x, y, labels, edge_index = [
+            item.to(device).float() for item in [x, y, labels, edge_index]
+        ]
         with torch.no_grad():
             predicted = model(x).float().to(device)
 
             loss = loss_func(predicted, y)
-
             labels = labels.unsqueeze(1).repeat(1, predicted.shape[1])
 
             if len(t_test_predicted_list) <= 0:
@@ -34,7 +37,9 @@ def test(model, dataloader, device):
                 t_test_ground_list = y
                 t_test_labels_list = labels
             else:
-                t_test_predicted_list = torch.cat((t_test_predicted_list, predicted), dim=0)
+                t_test_predicted_list = torch.cat(
+                    (t_test_predicted_list, predicted), dim=0
+                )
                 t_test_ground_list = torch.cat((t_test_ground_list, y), dim=0)
                 t_test_labels_list = torch.cat((t_test_labels_list, labels), dim=0)
 
