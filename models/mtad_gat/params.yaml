@@ -26,7 +26,6 @@ train_params:
   n_epochs: 30
   batch_size: 264
   init_lr: 0.001
-  # dload: "output/mtad_gat"
   device: "mps"
   n_workers: 0
   target_dims: null
@@ -49,5 +48,3 @@ predictor_params:
   gamma: 0.8
   reg_level: 1
 save_path: "saved_models/mtad_gat"
-other:
-  comment: ""

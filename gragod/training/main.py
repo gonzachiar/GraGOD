@@ -87,6 +87,7 @@ def load_training_data(
     #         shuffle=shuffle,
     #         random_state=random_state,
     #     )
+
     if dataset == Datasets.SWAT:
         return load_swat_training_data(
             normalize=normalize, clean=clean, interpolate_method=interpolate_method

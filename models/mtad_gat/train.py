@@ -20,20 +20,20 @@ set_seeds(RANDOM_SEED)
 def main(
     dataset_name: str,
     model_params: dict,
+    n_epochs: int = 30,
+    batch_size: int = 264,
+    init_lr: float = 0.001,
+    device: str = "mps",
+    n_workers: int = 0,
+    target_dims: int | None = None,
+    log_dir: str = "output",
+    log_every_n_steps: int = 1,
+    ckpt_path: str | None = None,
     test_size: float = 0.1,
     val_size: float = 0.1,
     clean: bool = True,
     interpolate_method: InterPolationMethods | None = None,
-    batch_size: int = 264,
-    n_workers: int = 0,
-    init_lr: float = 0.001,
-    n_epochs: int = 30,
-    target_dims: int | None = None,
-    device: str = "mps",
     params: dict = {},
-    log_dir: str = "output",
-    ckpt_path: str | None = None,
-    log_every_n_steps: int = 1,
 ):
     dataset = cast_dataset(dataset_name)
     dataset_config = get_dataset_config(dataset=dataset)
@@ -50,7 +50,6 @@ def main(
 
     # Create dataloaders
     window_size = model_params["window_size"]
-    batch_size = batch_size
 
     train_dataset = SlidingWindowDataset(X_train, window_size)
     val_dataset = SlidingWindowDataset(X_val, window_size)
