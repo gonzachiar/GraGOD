@@ -16,7 +16,7 @@ from gragod.types import cast_dataset
 from models.gdn.dataset import TimeDataset
 from models.gdn.evaluate import print_score
 from models.gdn.model import GDN
-from models.gdn.preprocess import build_loc_net
+from models.gdn.preprocess import build_graph_network
 from models.gdn.test import test
 
 
@@ -119,7 +119,7 @@ def main(
         for ft in column_names_list
     }
 
-    fc_edge_index = build_loc_net(base_graph_structure, list(column_names_list))
+    fc_edge_index = build_graph_network(base_graph_structure, list(column_names_list))
 
     cfg = {
         "slide_win": params["model_params"]["window_size"],
@@ -146,7 +146,7 @@ def main(
         topk=model_params["topk"],
     ).to(device)
 
-    optimizer = torch.optim.Adam(
+    optimizer = torch.optim.Adam(  # type: ignore
         model.parameters(),
         lr=init_lr,
         weight_decay=weight_decay,
@@ -164,12 +164,12 @@ def main(
 
     stop_improve_count = 0
 
-    dataloader = train_loader
+    val_result = ([], [], [])
 
     for i_epoch in range(n_epochs):
         acu_loss = 0
         model.train()
-        for x, labels, attack_labels, edge_index in dataloader:
+        for x, labels, attack_labels, edge_index in train_loader:
             x, labels, edge_index = [
                 item.float().to(device) for item in [x, labels, edge_index]
             ]
@@ -189,13 +189,13 @@ def main(
         # each epoch
         print(
             "epoch ({} / {}) (Loss:{:.8f}, ACU_loss:{:.8f})".format(
-                i_epoch, n_epochs, acu_loss / len(dataloader), acu_loss
+                i_epoch, n_epochs, acu_loss / len(train_loader), acu_loss
             ),
             flush=True,
         )
 
         # use val dataset to judge
-        val_loss, val_result = test(model, val_loader, device)
+        val_loss, val_result = test(model, val_loader, torch.device(device))
 
         if val_loss < min_loss:
             min_loss = val_loss
@@ -206,7 +206,7 @@ def main(
         if stop_improve_count >= early_stop_win:
             break
 
-    _, test_result = test(model, test_loader, device)
+    _, test_result = test(model, test_loader, torch.device(device))
 
     print_score(test_result, val_result, params["env_params"]["report"])
 

@@ -15,8 +15,8 @@ class TimeDataset(Dataset):
         data: torch.Tensor,
         labels: torch.Tensor,
         edge_index: torch.Tensor,
+        config: dict,
         is_train: bool = False,
-        config: dict | None = None,
     ):
         """
         Initialize the TimeDataset.
@@ -64,7 +64,7 @@ class TimeDataset(Dataset):
             self.config[k] for k in ["slide_win", "slide_stride"]
         ]
 
-        node_num, total_time_len = data.shape
+        _, total_time_len = data.shape
         rang = (
             range(slide_win, total_time_len, slide_stride)
             if self.is_train

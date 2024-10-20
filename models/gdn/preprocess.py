@@ -1,7 +1,7 @@
 import torch
 
 
-def build_loc_net(struc: dict, columns: list) -> torch.Tensor:
+def build_graph_network(struc: dict, columns: list) -> torch.Tensor:
     """
     Build a location network from a given structure and column list.
 

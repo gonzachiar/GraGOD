@@ -13,7 +13,6 @@ def eval_scores(
     scores: list[float],
     true_scores: list[float],
     th_steps: int,
-    return_thresold: bool = False,
 ) -> tuple[list[float], list[float]]:
     """
     Calculate F1 scores for different thresholds.
@@ -28,27 +27,27 @@ def eval_scores(
         F1 scores for each threshold.
         Thresholds (if return_thresold is True).
     """
-    padding_list = [0] * (len(true_scores) - len(scores))
+    padding_zeros = [0] * (len(true_scores) - len(scores))
 
-    if len(padding_list) > 0:
-        scores = padding_list + scores
+    if len(padding_zeros) > 0:
+        scores = padding_zeros + scores
 
-    scores_sorted = rankdata(scores, method="ordinal")
-    th_steps = th_steps
-    th_vals = np.array(range(th_steps)) * 1.0 / th_steps
-    fmeas = [None] * th_steps
-    thresholds = [None] * th_steps
-    for i in range(th_steps):
-        cur_pred = scores_sorted > th_vals[i] * len(scores)
+    ranked_scores = rankdata(scores, method="ordinal")
+    threshold_steps = th_steps
+    threshold_values = np.array(range(threshold_steps)) * 1.0 / threshold_steps
+    f1_scores = []
+    threshold_list = []
+    for step in range(threshold_steps):
+        current_prediction = ranked_scores > threshold_values[step] * len(scores)
 
-        fmeas[i] = f1_score(true_scores, cur_pred)
+        f1_scores.append(f1_score(true_scores, current_prediction))
 
-        score_index = scores_sorted.tolist().index(int(th_vals[i] * len(scores) + 1))
-        thresholds[i] = scores[score_index]
+        score_threshold_index = ranked_scores.tolist().index(
+            int(threshold_values[step] * len(scores) + 1)
+        )
+        threshold_list.append(scores[score_threshold_index])
 
-    if return_thresold:
-        return fmeas, thresholds
-    return fmeas
+    return f1_scores, threshold_list
 
 
 def get_err_median_and_iqr(
@@ -64,16 +63,17 @@ def get_err_median_and_iqr(
     Returns:
         Median and IQR of the absolute error.
     """
-    np_arr = np.abs(np.subtract(np.array(predicted), np.array(groundtruth)))
+    absolute_errors = np.abs(np.subtract(np.array(predicted), np.array(groundtruth)))
 
-    err_median = np.median(np_arr)
-    err_iqr = iqr(np_arr)
+    error_median = np.median(absolute_errors)
+    error_interquartile_range = iqr(absolute_errors)
 
-    return err_median, err_iqr
+    return float(error_median), float(error_interquartile_range)
 
 
 def get_full_err_scores(
-    test_result: list[float], val_result: list[float]
+    test_result: tuple[list[float], list[float], list[float]],
+    val_result: tuple[list[float], list[float], list[float]],
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Calculate error scores for all features.
@@ -83,34 +83,37 @@ def get_full_err_scores(
         val_result: Validation results.
 
     Returns:
-        All scores and normal distribution scores.
+        Tuple containing:
+        - all_feature_scores: Error scores for all features.
+        - all_normal_scores: Normal distribution scores for all features.
     """
-    np_test_result = np.array(test_result)
-    np_val_result = np.array(val_result)
+    test_array = np.array(test_result)
+    val_array = np.array(val_result)
 
-    all_scores = None
-    all_normals = None
-    feature_num = np_test_result.shape[-1]
+    num_features = test_array.shape[-1]
+    all_feature_scores = []
+    all_normal_scores = []
 
-    for i in range(feature_num):
-        test_re_list = np_test_result[:2, :, i]
-        val_re_list = np_val_result[:2, :, i]
+    for feature_idx in range(num_features):
+        test_feature_data = test_array[:2, :, feature_idx]
+        val_feature_data = val_array[:2, :, feature_idx]
 
-        scores = get_err_scores(test_re_list, val_re_list)
-        normal_dist = get_err_scores(val_re_list, val_re_list)
+        feature_scores = get_err_scores(
+            (test_feature_data[0], test_feature_data[1]),
+        )
+        normal_scores = get_err_scores(
+            (val_feature_data[0], val_feature_data[1]),
+        )
 
-        if all_scores is None:
-            all_scores = scores
-            all_normals = normal_dist
-        else:
-            all_scores = np.vstack((all_scores, scores))
-            all_normals = np.vstack((all_normals, normal_dist))
+        all_feature_scores.append(feature_scores)
+        all_normal_scores.append(normal_scores)
 
-    return all_scores, all_normals
+    return np.array(all_feature_scores), np.array(all_normal_scores)
 
 
 def get_final_err_scores(
-    test_result: list[float], val_result: list[float]
+    test_result: tuple[list[float], list[float], list[float]],
+    val_result: tuple[list[float], list[float], list[float]],
 ) -> np.ndarray:
     """
     Get final error scores.
@@ -122,30 +125,24 @@ def get_final_err_scores(
     Returns:
         Final error scores.
     """
-    full_scores, all_normals = get_full_err_scores(
-        test_result, val_result, return_normal_scores=True
-    )
+    full_scores, _ = get_full_err_scores(test_result, val_result)
 
     all_scores = np.max(full_scores, axis=0)
 
     return all_scores
 
 
-def get_err_scores(
-    test_res: tuple[list[float], list[float]], val_res: tuple[list[float], list[float]]
-) -> np.ndarray:
+def get_err_scores(test_res: tuple[list[float], list[float]]) -> np.ndarray:
     """
     Calculate error scores.
 
     Args:
         test_res: Test results (predictions, ground truth).
-        val_res: Validation results (predictions, ground truth).
 
     Returns:
         Smoothed error scores.
     """
     test_predict, test_gt = test_res
-    val_predict, val_gt = val_res
 
     n_err_mid, n_err_iqr = get_err_median_and_iqr(test_predict, test_gt)
 
@@ -183,7 +180,7 @@ def get_loss(predict: list[float], gt: list[float]) -> float:
 
     loss = mean_squared_error(predicted_list, ground_truth_list)
 
-    return loss
+    return float(loss)
 
 
 def get_f1_scores(
@@ -221,7 +218,7 @@ def get_f1_scores(
 
         total_topk_err_scores.append(sum_score)
 
-    final_topk_fmeas = eval_scores(total_topk_err_scores, gt_labels, 400)
+    final_topk_fmeas, _ = eval_scores(total_topk_err_scores, gt_labels, 400)
 
     return final_topk_fmeas
 
@@ -270,7 +267,7 @@ def get_val_performance_data(
 
     auc_score = roc_auc_score(gt_labels, total_topk_err_scores)
 
-    return f1, pre, rec, auc_score, thresold
+    return float(f1), float(pre), float(rec), float(auc_score), float(thresold)
 
 
 def get_best_performance_data(
@@ -299,9 +296,7 @@ def get_best_performance_data(
         np.take_along_axis(total_err_scores, topk_indices, axis=0), axis=0
     )
 
-    final_topk_fmeas, thresolds = eval_scores(
-        total_topk_err_scores, gt_labels, 400, return_thresold=True
-    )
+    final_topk_fmeas, thresolds = eval_scores(total_topk_err_scores, gt_labels, 400)
 
     th_i = final_topk_fmeas.index(max(final_topk_fmeas))
     thresold = thresolds[th_i]
@@ -318,12 +313,18 @@ def get_best_performance_data(
 
     auc_score = roc_auc_score(gt_labels, total_topk_err_scores)
 
-    return max(final_topk_fmeas), pre, rec, auc_score, thresold
+    return (
+        float(max(final_topk_fmeas)),
+        float(pre),
+        float(rec),
+        float(auc_score),
+        float(thresold),
+    )
 
 
 def print_score(
-    test_result: list[float],
-    val_result: list[float],
+    test_result: tuple[list[float], list[float], list[float]],
+    val_result: tuple[list[float], list[float], list[float]],
     report: str,
 ) -> None:
     """
@@ -346,11 +347,12 @@ def print_score(
 
     print("\n=========================** Result **============================\n")
 
-    info = None
     if report == "best":
         info = top1_best_info
     elif report == "val":
         info = top1_val_info
+    else:
+        raise ValueError("Invalid report type. Use 'best' or 'val'.")
 
     print(f"F1 score: {info[0]}")
     print(f"precision: {info[1]}")
