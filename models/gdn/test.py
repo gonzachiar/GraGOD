@@ -1,11 +1,25 @@
 import torch
 import torch.nn as nn
-
-# print all tensor regardless of length
-torch.set_printoptions(profile="full")
+from torch.utils.data import DataLoader
 
 
-def test(model, dataloader, device):
+def test(
+    model: nn.Module, dataloader: DataLoader, device: torch.device
+) -> tuple[float, tuple[list[float], list[float], list[float]]]:
+    """
+    Test the model on the given dataloader.
+
+    Args:
+        model (nn.Module): The neural network model to test.
+        dataloader (DataLoader): The DataLoader containing the test data.
+        device (torch.device): The device to run the model on.
+
+    Returns:
+        tuple: A tuple containing:
+            - float: The average loss over the test set.
+            - tuple: A tuple of three lists containing the predicted values,
+                     ground truth values, and labels for all test samples.
+    """
     loss_func = nn.MSELoss(reduction="mean")
 
     test_loss_list = []

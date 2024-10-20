@@ -18,7 +18,7 @@ model_params:
 
 env_params:
   save_path_pattern: ""
-  random_seed: 0
+  random_seed: 42
   report: "val"
   load_model_path: ""
   save_path: "msl"

@@ -8,19 +8,26 @@ np.set_printoptions(threshold=np.inf)
 
 class TimeDataset(Dataset):
     def __init__(
-        self, data_tensor, labels_tensor, edge_index, is_train=False, config=None
+        self,
+        data: torch.Tensor,
+        labels: torch.Tensor,
+        edge_index: torch.Tensor,
+        is_train: bool = False,
+        config: dict | None = None,
     ):
         self.config = config
         self.edge_index = edge_index
         self.is_train = is_train
-        data_tensor = data_tensor.T
+        data = data.T
 
-        self.x, self.y, self.labels = self.process(data_tensor, labels_tensor)
+        self.x, self.y, self.labels = self.process(data, labels)
 
     def __len__(self):
         return len(self.x)
 
-    def process(self, data, labels):
+    def process(
+        self, data: torch.Tensor, labels: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         x_arr, y_arr = [], []
         labels_arr = []
 
@@ -52,7 +59,9 @@ class TimeDataset(Dataset):
 
         return x, y, labels
 
-    def __getitem__(self, idx):
+    def __getitem__(
+        self, idx: int
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
 
         feature = self.x[idx].double()
         y = self.y[idx].double()

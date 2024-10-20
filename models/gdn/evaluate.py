@@ -9,8 +9,25 @@ from sklearn.metrics import (
 )
 
 
-# calculate F1 scores
-def eval_scores(scores, true_scores, th_steps, return_thresold=False):
+def eval_scores(
+    scores: list[float],
+    true_scores: list[float],
+    th_steps: int,
+    return_thresold: bool = False,
+) -> tuple[list[float], list[float]]:
+    """
+    Calculate F1 scores for different thresholds.
+
+    Args:
+        scores (list): Anomaly scores.
+        true_scores (list): Ground truth labels.
+        th_steps (int): Number of threshold steps.
+        return_thresold (bool, optional): Whether to return thresholds. Defaults to False.
+
+    Returns:
+        list: F1 scores for each threshold.
+        list: Thresholds (if return_thresold is True).
+    """
     padding_list = [0] * (len(true_scores) - len(scores))
 
     if len(padding_list) > 0:
@@ -34,8 +51,19 @@ def eval_scores(scores, true_scores, th_steps, return_thresold=False):
     return fmeas
 
 
-def get_err_median_and_iqr(predicted, groundtruth):
+def get_err_median_and_iqr(
+    predicted: list[float], groundtruth: list[float]
+) -> tuple[float, float]:
+    """
+    Calculate the median and interquartile range of the absolute error.
 
+    Args:
+        predicted (list): Predicted values.
+        groundtruth (list): Ground truth values.
+
+    Returns:
+        tuple: Median and IQR of the absolute error.
+    """
     np_arr = np.abs(np.subtract(np.array(predicted), np.array(groundtruth)))
 
     err_median = np.median(np_arr)
@@ -44,7 +72,19 @@ def get_err_median_and_iqr(predicted, groundtruth):
     return err_median, err_iqr
 
 
-def get_full_err_scores(test_result, val_result):
+def get_full_err_scores(
+    test_result: list[float], val_result: list[float]
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Calculate error scores for all features.
+
+    Args:
+        test_result (list): Test results.
+        val_result (list): Validation results.
+
+    Returns:
+        tuple: All scores and normal distribution scores.
+    """
     np_test_result = np.array(test_result)
     np_val_result = np.array(val_result)
 
@@ -69,7 +109,19 @@ def get_full_err_scores(test_result, val_result):
     return all_scores, all_normals
 
 
-def get_final_err_scores(test_result, val_result):
+def get_final_err_scores(
+    test_result: list[float], val_result: list[float]
+) -> np.ndarray:
+    """
+    Get final error scores.
+
+    Args:
+        test_result (list): Test results.
+        val_result (list): Validation results.
+
+    Returns:
+        numpy.ndarray: Final error scores.
+    """
     full_scores, all_normals = get_full_err_scores(
         test_result, val_result, return_normal_scores=True
     )
@@ -79,7 +131,19 @@ def get_final_err_scores(test_result, val_result):
     return all_scores
 
 
-def get_err_scores(test_res, val_res):
+def get_err_scores(
+    test_res: tuple[list[float], list[float]], val_res: tuple[list[float], list[float]]
+) -> np.ndarray:
+    """
+    Calculate error scores.
+
+    Args:
+        test_res (tuple): Test results (predictions, ground truth).
+        val_res (tuple): Validation results (predictions, ground truth).
+
+    Returns:
+        numpy.ndarray: Smoothed error scores.
+    """
     test_predict, test_gt = test_res
     val_predict, val_gt = val_res
 
@@ -103,8 +167,17 @@ def get_err_scores(test_res, val_res):
     return smoothed_err_scores
 
 
-def get_loss(predict, gt):
+def get_loss(predict: list[float], gt: list[float]) -> float:
+    """
+    Calculate mean squared error loss.
 
+    Args:
+        predict (list): Predicted values.
+        gt (list): Ground truth values.
+
+    Returns:
+        float: Mean squared error.
+    """
     ground_truth_list = np.array(gt)
     predicted_list = np.array(predict)
 
@@ -113,12 +186,23 @@ def get_loss(predict, gt):
     return loss
 
 
-def get_f1_scores(total_err_scores, gt_labels, topk=1):
+def get_f1_scores(
+    total_err_scores: np.ndarray, gt_labels: list[float], topk: int = 1
+) -> list[float]:
+    """
+    Calculate F1 scores for top-k error scores.
+
+    Args:
+        total_err_scores (numpy.ndarray): Total error scores.
+        gt_labels (list): Ground truth labels.
+        topk (int, optional): Number of top scores to consider. Defaults to 1.
+
+    Returns:
+        list: F1 scores.
+    """
     print("total_err_scores", total_err_scores.shape)
-    # remove the highest and lowest score at each timestep
     total_features = total_err_scores.shape[0]
 
-    # topk_indices = np.argpartition(total_err_scores, range(total_features-1-topk, total_features-1), axis=0)[-topk-1:-1]
     topk_indices = np.argpartition(
         total_err_scores, range(total_features - topk - 1, total_features), axis=0
     )[-topk:]
@@ -126,7 +210,6 @@ def get_f1_scores(total_err_scores, gt_labels, topk=1):
     topk_indices = np.transpose(topk_indices)
 
     total_topk_err_scores = []
-    # topk_anomaly_sensors = []
 
     for i, indexs in enumerate(topk_indices):
 
@@ -144,14 +227,29 @@ def get_f1_scores(total_err_scores, gt_labels, topk=1):
     return final_topk_fmeas
 
 
-def get_val_performance_data(total_err_scores, normal_scores, gt_labels, topk=1):
+def get_val_performance_data(
+    total_err_scores: np.ndarray,
+    normal_scores: np.ndarray,
+    gt_labels: list[float],
+    topk: int = 1,
+) -> tuple[float, float, float, float, float]:
+    """
+    Get performance data for validation set.
+
+    Args:
+        total_err_scores (numpy.ndarray): Total error scores.
+        normal_scores (numpy.ndarray): Normal scores.
+        gt_labels (list): Ground truth labels.
+        topk (int, optional): Number of top scores to consider. Defaults to 1.
+
+    Returns:
+        tuple: F1 score, precision, recall, AUC score, and threshold.
+    """
     total_features = total_err_scores.shape[0]
 
     topk_indices = np.argpartition(
         total_err_scores, range(total_features - topk - 1, total_features), axis=0
     )[-topk:]
-
-    total_topk_err_scores = []
 
     total_topk_err_scores = np.sum(
         np.take_along_axis(total_err_scores, topk_indices, axis=0), axis=0
@@ -176,11 +274,24 @@ def get_val_performance_data(total_err_scores, normal_scores, gt_labels, topk=1)
     return f1, pre, rec, auc_score, thresold
 
 
-def get_best_performance_data(total_err_scores, gt_labels, topk=1):
+def get_best_performance_data(
+    total_err_scores: np.ndarray,
+    gt_labels: list[float],
+    topk: int = 1,
+) -> tuple[float, float, float, float, float]:
+    """
+    Get best performance data.
 
+    Args:
+        total_err_scores (numpy.ndarray): Total error scores.
+        gt_labels (list): Ground truth labels.
+        topk (int, optional): Number of top scores to consider. Defaults to 1.
+
+    Returns:
+        tuple: Best F1 score, precision, recall, AUC score, and threshold.
+    """
     total_features = total_err_scores.shape[0]
 
-    # topk_indices = np.argpartition(total_err_scores, range(total_features-1-topk, total_features-1), axis=0)[-topk-1:-1]
     topk_indices = np.argpartition(
         total_err_scores, range(total_features - topk - 1, total_features), axis=0
     )[-topk:]
@@ -209,3 +320,40 @@ def get_best_performance_data(total_err_scores, gt_labels, topk=1):
     auc_score = roc_auc_score(gt_labels, total_topk_err_scores)
 
     return max(final_topk_fmeas), pre, rec, auc_score, thresold
+
+
+def print_score(
+    test_result: list[float],
+    val_result: list[float],
+    report: str,
+) -> None:
+    """
+    Calculate and print the model's performance scores.
+
+    Args:
+        test_result (list): Results from testing the model.
+        val_result (list): Results from validating the model.
+        report (str): Type of report to generate ('best' or 'val').
+    """
+    np_test_result = np.array(test_result)
+
+    test_labels = np_test_result[2, :, 0].tolist()
+
+    test_scores, normal_scores = get_full_err_scores(test_result, val_result)
+
+    top1_best_info = get_best_performance_data(test_scores, test_labels, topk=1)
+    top1_val_info = get_val_performance_data(
+        test_scores, normal_scores, test_labels, topk=1
+    )
+
+    print("\n=========================** Result **============================\n")
+
+    info = None
+    if report == "best":
+        info = top1_best_info
+    elif report == "val":
+        info = top1_val_info
+
+    print(f"F1 score: {info[0]}")
+    print(f"precision: {info[1]}")
+    print(f"recall: {info[2]}\n")

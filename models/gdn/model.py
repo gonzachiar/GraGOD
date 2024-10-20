@@ -36,13 +36,13 @@ class GDN(nn.Module):
 
     def __init__(
         self,
-        edge_index_sets,
-        node_num,
-        dim=64,
-        out_layer_inter_dim=256,
-        input_dim=10,
-        out_layer_num=1,
-        topk=20,
+        edge_index_sets: list[torch.Tensor],
+        node_num: int,
+        dim: int = 64,
+        out_layer_inter_dim: int = 256,
+        input_dim: int = 10,
+        out_layer_num: int = 1,
+        topk: int = 20,
     ):
 
         super(GDN, self).__init__()
@@ -61,7 +61,9 @@ class GDN(nn.Module):
         self.topk = topk
         self.learned_graph = None
 
-        self.out_layer = OutLayer(dim * edge_set_num, out_layer_num, inter_num=out_layer_inter_dim)
+        self.out_layer = OutLayer(
+            dim * edge_set_num, out_layer_num, inter_num=out_layer_inter_dim
+        )
 
         self.cache_edge_index_sets = [None] * edge_set_num
 
@@ -73,7 +75,7 @@ class GDN(nn.Module):
         """Initialize model parameters."""
         nn.init.kaiming_uniform_(self.embedding.weight, a=math.sqrt(5))
 
-    def forward(self, data):
+    def forward(self, data: torch.Tensor) -> torch.Tensor:
         """
         Forward pass of the GDN model.
 
@@ -97,7 +99,10 @@ class GDN(nn.Module):
             edge_num = edge_index.shape[1]
             cache_edge_index = self.cache_edge_index_sets[i]
 
-            if cache_edge_index is None or cache_edge_index.shape[1] != edge_num * batch_num:
+            if (
+                cache_edge_index is None
+                or cache_edge_index.shape[1] != edge_num * batch_num
+            ):
                 self.cache_edge_index_sets[i] = self._get_batch_edge_index(
                     edge_index, batch_num, node_num
                 ).to(device)
@@ -136,7 +141,10 @@ class GDN(nn.Module):
                 gated_edge_index, batch_num, node_num
             ).to(device)
             gcn_out = self.gnn_layers[i](
-                x, batch_gated_edge_index, node_num=node_num * batch_num, embedding=all_embeddings
+                x,
+                batch_gated_edge_index,
+                node_num=node_num * batch_num,
+                embedding=all_embeddings,
             )
 
             gcn_outs.append(gcn_out)
@@ -157,7 +165,9 @@ class GDN(nn.Module):
 
         return out
 
-    def _get_batch_edge_index(self, org_edge_index, batch_num, node_num):
+    def _get_batch_edge_index(
+        self, org_edge_index: torch.Tensor, batch_num: int, node_num: int
+    ) -> torch.Tensor:
         """
         Get batched edge index for multiple graphs.
 
