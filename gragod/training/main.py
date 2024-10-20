@@ -5,6 +5,8 @@ import torch
 import yaml
 
 from datasets import load_swat_training_data, load_telco_training_data
+from datasets.swat import get_swat_column_names_list
+from datasets.telco import get_telco_column_names_list
 from gragod import Datasets, InterPolationMethods, ParamFileTypes
 from gragod.utils import get_logger
 
@@ -106,4 +108,10 @@ def load_training_data(
         raise ValueError(f"{dataset} is an unkown dataset")
 
 
-# %%
+def get_column_names_list(dataset: Datasets) -> list[str]:
+    if dataset == Datasets.SWAT:
+        return get_swat_column_names_list()
+    elif dataset == Datasets.TELCO:
+        return get_telco_column_names_list()
+    else:
+        raise ValueError(f"{dataset} is an unkown dataset")

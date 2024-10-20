@@ -1,15 +1,18 @@
 import argparse
 
 import numpy as np
-import pandas as pd
 import torch
-from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 from datasets.config import get_dataset_config
 from gragod import InterPolationMethods, ParamFileTypes
-from gragod.training import load_params, load_training_data, set_seeds
+from gragod.training import (
+    get_column_names_list,
+    load_params,
+    load_training_data,
+    set_seeds,
+)
 from gragod.types import cast_dataset
 from models.gdn.dataset import TimeDataset
 from models.gdn.evaluate import (
@@ -31,19 +34,6 @@ def loss_func(y_pred, y_true):
     loss = F.mse_loss(y_pred, y_true, reduction="mean")
 
     return loss
-
-
-def _get_column_names_list(dataset: str) -> list[str]:
-    # TODO: we should check if there's something more intelligent to do
-    df_train = pd.read_csv(
-        f"datasets_files/telco/TELCO_data_train.csv", index_col=0, nrows=1
-    )  # TODO: change
-    column_names_list = df_train.columns.tolist()
-
-    if "attack" in df_train.columns:
-        df_train = df_train.drop(columns=["attack"])
-
-    return column_names_list
 
 
 def _get_attack_or_not_attack(tensor: torch.Tensor) -> torch.Tensor:
@@ -82,6 +72,19 @@ def get_score(test_result, val_result, report: str):
     print(f"recall: {info[2]}\n")
 
 
+def get_dataloader(
+    X,
+    y,
+    edge_index,
+    batch_size: int,
+    n_workers: int,
+    config: dict,
+    is_train: bool = False,
+):
+    dataset = TimeDataset(X, y, edge_index, is_train=is_train, config=config)
+    return DataLoader(dataset, batch_size=batch_size, num_workers=n_workers)
+
+
 def main(
     dataset_name: str,
     model_params: dict,
@@ -112,7 +115,7 @@ def main(
     y_train = _get_attack_or_not_attack(y_train)
     y_val = _get_attack_or_not_attack(y_val)
     y_test = _get_attack_or_not_attack(y_test)
-    column_names_list = _get_column_names_list(dataset_name)
+    column_names_list = get_column_names_list(dataset)
 
     # Create a fully connected graph
     base_graph_structure = {
@@ -121,34 +124,20 @@ def main(
     }
 
     fc_edge_index = build_loc_net(base_graph_structure, list(column_names_list))
-    fc_edge_index = torch.tensor(fc_edge_index, dtype=torch.long)
 
     cfg = {
         "slide_win": params["model_params"]["window_size"],
         "slide_stride": params["model_params"]["stride"],
     }
 
-    train_dataset = TimeDataset(
-        X_train, torch.zeros(X_train.shape[0]), fc_edge_index, mode="train", config=cfg
+    train_loader = get_dataloader(
+        X_train, y_train, fc_edge_index, batch_size, n_workers, cfg, is_train=True
     )
-    val_dataset = TimeDataset(X_val, y_val, fc_edge_index, mode="val", config=cfg)
-    test_dataset = TimeDataset(X_test, y_test, fc_edge_index, mode="test", config=cfg)
-
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        num_workers=n_workers,
+    val_loader = get_dataloader(
+        X_val, y_val, fc_edge_index, batch_size, n_workers, cfg, is_train=False
     )
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=batch_size,
-        num_workers=n_workers,
-    )
-
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=batch_size,
-        num_workers=n_workers,
+    test_loader = get_dataloader(
+        X_test, y_test, fc_edge_index, batch_size, n_workers, cfg, is_train=False
     )
 
     model = GDN(

@@ -8,11 +8,11 @@ np.set_printoptions(threshold=np.inf)
 
 class TimeDataset(Dataset):
     def __init__(
-        self, data_tensor, labels_tensor, edge_index, mode="train", config=None
+        self, data_tensor, labels_tensor, edge_index, is_train=False, config=None
     ):
         self.config = config
         self.edge_index = edge_index
-        self.mode = mode
+        self.is_train = is_train
         data_tensor = data_tensor.T
 
         self.x, self.y, self.labels = self.process(data_tensor, labels_tensor)
@@ -27,12 +27,11 @@ class TimeDataset(Dataset):
         slide_win, slide_stride = [
             self.config[k] for k in ["slide_win", "slide_stride"]
         ]
-        is_train = self.mode == "train"
 
         node_num, total_time_len = data.shape
         rang = (
             range(slide_win, total_time_len, slide_stride)
-            if is_train
+            if self.is_train
             else range(slide_win, total_time_len)
         )
 
