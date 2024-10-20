@@ -16,12 +16,12 @@ class OutLayer(nn.Module):
     The final layer always outputs a single value.
 
     Attributes:
-        mlp (nn.ModuleList): A list of modules representing the layers of the MLP.
+        mlp: A list of modules representing the layers of the MLP.
 
     Args:
-        in_num (int): The number of input features.
-        layer_num (int): The number of layers in the MLP.
-        inter_num (int, optional): The number of neurons in intermediate layers. Defaults to 512.
+        in_num: The number of input features.
+        layer_num: The number of layers in the MLP.
+        inter_num: The number of neurons in intermediate layers.
     """
 
     def __init__(self, in_num, layer_num, inter_num=512):
@@ -46,10 +46,10 @@ class OutLayer(nn.Module):
         Forward pass of the OutLayer.
 
         Args:
-            x (torch.Tensor): Input tensor.
+            x: Input tensor.
 
         Returns:
-            torch.Tensor: Output tensor after passing through the MLP.
+            Output tensor after passing through the MLP.
         """
         out = x
 
@@ -68,17 +68,18 @@ class GNNLayer(nn.Module):
     """
     A Graph Neural Network layer.
 
-    This layer applies a graph convolution followed by batch normalization and ReLU activation.
+    This layer applies a graph convolution followed by batch normalization
+    and ReLU activation.
 
     Attributes:
-        gnn (GraphLayer): The graph convolutional layer.
-        bn (nn.BatchNorm1d): Batch normalization layer.
-        relu (nn.ReLU): ReLU activation function.
+        gnn: The graph convolutional layer.
+        bn: Batch normalization layer.
+        relu: ReLU activation function.
 
     Args:
-        in_channel (int): Number of input channels.
-        out_channel (int): Number of output channels.
-        heads (int, optional): Number of attention heads. Defaults to 1.
+        in_channel: Number of input channels.
+        out_channel: Number of output channels.
+        heads: Number of attention heads.
     """
 
     def __init__(self, in_channel, out_channel, heads=1):
@@ -94,13 +95,14 @@ class GNNLayer(nn.Module):
         Forward pass of the GNNLayer.
 
         Args:
-            x (torch.Tensor): Input node features.
-            edge_index (torch.Tensor): Graph connectivity in COO format.
-            embedding (torch.Tensor, optional): Node embeddings. Defaults to None.
-            node_num (int, optional): Number of nodes. Defaults to 0.
+            x: Input node features.
+            edge_index: Graph connectivity in COO format.
+            embedding: Node embeddings. Defaults to None.
+            node_num: Number of nodes. Defaults to 0.
 
         Returns:
-            torch.Tensor: Output tensor after applying graph convolution, batch normalization, and ReLU.
+            Output tensor after applying graph convolution,
+            batch normalization, and ReLU.
         """
         out = self.gnn(x, edge_index, embedding)
         out = self.bn(out)
@@ -112,26 +114,26 @@ class GraphLayer(MessagePassing):
     Class for graph convolutional layers using message passing.
 
     Attributes:
-        in_channels (int): Number of input channels for the layer
-        out_channels (int): Number of output channels for the layer
-        heads (int): Number of heads for multi-head attention
-        concat_heads (bool): Whether to concatenate across heads
-        negative_slope (float): Slope for LeakyReLU
-        dropout (float): Dropout rate
-        lin (nn.Module): Linear layer for transforming input
-        att_i (nn.Parameter): Attention parameter related to x_i
-        att_j (nn.Parameter): Attention parameter related to x_j
-        att_em_i (nn.Parameter): Attention parameter related to embedding of x_i
-        att_em_j (nn.Parameter): Attention parameter related to embedding of x_j
-        bias (nn.Parameter): Bias parameter added after message propagation
+        in_channels: Number of input channels for the layer
+        out_channels: Number of output channels for the layer
+        heads: Number of heads for multi-head attention
+        concat_heads: Whether to concatenate across heads
+        negative_slope: Slope for LeakyReLU
+        dropout: Dropout rate
+        lin: Linear layer for transforming input
+        att_i: Attention parameter related to x_i
+        att_j: Attention parameter related to x_j
+        att_em_i: Attention parameter related to embedding of x_i
+        att_em_j: Attention parameter related to embedding of x_j
+        bias: Bias parameter added after message propagation
 
     Args:
-        in_channels (int): Number of input channels.
-        out_channels (int): Number of output channels.
-        heads (int, optional): Number of attention heads. Defaults to 1.
-        concat_heads (bool, optional): Whether to concatenate attention heads. Defaults to True.
-        negative_slope (float, optional): Negative slope for LeakyReLU. Defaults to 0.2.
-        dropout (float, optional): Dropout rate. Defaults to 0.
+        in_channels: Number of input channels.
+        out_channels: Number of output channels.
+        heads: Number of attention heads.
+        concat_heads: Whether to concatenate attention heads.
+        negative_slope: Negative slope for LeakyReLU.
+        dropout: Dropout rate.
     """
 
     def __init__(
@@ -182,14 +184,17 @@ class GraphLayer(MessagePassing):
         """Forward method for propagating messages of GraphLayer.
 
         Args:
-            x (torch.Tensor): Node features tensor of shape [N x batch_size, in_channels],
-                              where N is the number of nodes.
-            edge_index (torch.Tensor): Graph connectivity in COO format,
-                                       shape [2, E x batch_size], where E is the number of edges.
-            embedding (torch.Tensor): Node embeddings tensor of shape [N x batch_size, out_channels].
+            x: Node features tensor of shape
+                [N x batch_size, in_channels], where N is the number of nodes.
+
+            edge_index: Graph connectivity in COO format,
+                shape [2, E x batch_size], where E is the number of edges.
+
+            embedding: Node embeddings tensor of shape
+                [N x batch_size, out_channels].
 
         Returns:
-            torch.Tensor: Output tensor after message passing and attention mechanism.
+            Output tensor after message passing and attention mechanism.
         """
         # linearly transform node feature matrix
         assert torch.is_tensor(x)
@@ -207,7 +212,8 @@ class GraphLayer(MessagePassing):
             edges=edge_index,
         )
 
-        # transform [N x batch_size, 1, _out_channels] to [N x batch_size, _out_channels]
+        # transform [N x batch_size, 1, _out_channels]
+        # to [N x batch_size, _out_channels]
         out = out.view(-1, self._out_channels)
 
         # apply final bias vector
@@ -216,18 +222,19 @@ class GraphLayer(MessagePassing):
         return out
 
     def message(self, x_i, x_j, edge_index_i, size_i, embedding, edges):
-        """Calculate the attention weights using the embedding vector, eq (6)-(8) in [1].
+        """Calculate the attention weights using the embedding vector,
+        eq (6)-(8) in [1].
 
         Args:
-            x_i (torch.Tensor): Source node features of shape [(topk x N x batch_size), out_channels].
-            x_j (torch.Tensor): Target node features of shape [(topk x N x batch_size), out_channels].
-            edge_index_i (torch.Tensor): Source node indices of shape [(topk x N x batch_size)].
-            size_i (int): Number of source nodes (N x batch_size).
-            embedding (torch.Tensor): Node embeddings of shape [(N x batch_size), out_channels].
-            edges (torch.Tensor): Edge indices of shape [2, (topk x N x batch_size)].
+            x_i: Source node features of shape [(topk x N x batch_size), out_channels]
+            x_j: Target node features of shape [(topk x N x batch_size), out_channels]
+            edge_index_i: Source node indices of shape [(topk x N x batch_size)]
+            size_i: Number of source nodes (N x batch_size)
+            embedding: Node embeddings of shape [(N x batch_size), out_channels]
+            edges: Edge indices of shape [2, (topk x N x batch_size)]
 
         Returns:
-            torch.Tensor: Attention-weighted node features.
+            Attention-weighted node features.
         """
         # transform to [(topk x N x batch_size), 1, out_channels]
         x_i = x_i.view(-1, self.heads, self.out_channels)
@@ -265,4 +272,11 @@ class GraphLayer(MessagePassing):
         return x_j * alpha
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.in_channels}, {self.out_channels}, heads={self.heads})"
+        return (
+            f"{self.__class__.__name__}("
+            f"in_channels={self.in_channels}, "
+            f"out_channels={self.out_channels}, "
+            f"heads={self.heads}, "
+            f"negative_slope={self.negative_slope}, "
+            f"dropout={self.dropout})"
+        )

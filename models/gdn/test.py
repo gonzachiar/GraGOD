@@ -10,15 +10,15 @@ def test(
     Test the model on the given dataloader.
 
     Args:
-        model (nn.Module): The neural network model to test.
-        dataloader (DataLoader): The DataLoader containing the test data.
-        device (torch.device): The device to run the model on.
+        model: The neural network model to test.
+        dataloader: The DataLoader containing the test data.
+        device: The device to run the model on.
 
     Returns:
-        tuple: A tuple containing:
-            - float: The average loss over the test set.
-            - tuple: A tuple of three lists containing the predicted values,
-                     ground truth values, and labels for all test samples.
+        A tuple containing:
+            - The average loss over the test set.
+            - A tuple of three lists containing the predicted values,
+              ground truth values, and labels for all test samples.
     """
     loss_func = nn.MSELoss(reduction="mean")
 

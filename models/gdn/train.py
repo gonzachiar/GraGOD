@@ -26,10 +26,10 @@ def _get_attack_or_not_attack(labels: torch.Tensor) -> torch.Tensor:
     It's a tensor with 1 if the attack is present in any of the columns and 0 otherwise.
 
     Args:
-        labels (torch.Tensor): The labels tensor.
+        labels: The labels tensor.
 
     Returns:
-        torch.Tensor: The attack or not attack tensor.
+        The attack or not attack tensor.
     """
     return (labels.sum(dim=1) > 0).float()
 
@@ -50,13 +50,13 @@ def get_dataloader(
         X: The input features.
         y: The target labels.
         edge_index: The edge indices for the graph structure.
-        batch_size (int): The batch size for the DataLoader.
-        n_workers (int): The number of worker processes for data loading.
-        config (dict): Configuration parameters for the TimeDataset.
-        is_train (bool, optional): Whether this is a training dataset. Defaults to False.
+        batch_size: The batch size for the DataLoader.
+        n_workers: The number of worker processes for data loading.
+        config: Configuration parameters for the TimeDataset.
+        is_train: Whether this is a training dataset.
 
     Returns:
-        DataLoader: The created DataLoader object.
+        The created DataLoader object.
     """
     dataset = TimeDataset(X, y, edge_index, is_train=is_train, config=config)
     return DataLoader(dataset, batch_size=batch_size, num_workers=n_workers)
@@ -81,19 +81,19 @@ def main(
     Main function to train and evaluate the GDN model.
 
     Args:
-        dataset_name (str): Name of the dataset to use.
-        model_params (dict): Parameters for the GDN model.
-        test_size (float, optional): Proportion of data to use for testing. Defaults to 0.1.
-        val_size (float, optional): Proportion of data to use for validation. Defaults to 0.1.
-        clean (bool, optional): Whether to clean the data. Defaults to True.
-        interpolate_method (InterPolationMethods | None, optional): Method to use for interpolation. Defaults to None.
-        batch_size (int, optional): Batch size for training. Defaults to 264.
-        n_workers (int, optional): Number of worker processes for data loading. Defaults to 0.
-        init_lr (float, optional): Initial learning rate. Defaults to 0.001.
-        weight_decay (float, optional): Weight decay for optimization. Defaults to 0.0.
-        n_epochs (int, optional): Number of training epochs. Defaults to 30.
-        device (str, optional): Device to use for training. Defaults to "mps".
-        params (dict, optional): Additional parameters. Defaults to {}.
+        dataset_name: Name of the dataset to use.
+        model_params: Parameters for the GDN model.
+        test_size: Proportion of data to use for testing.
+        val_size: Proportion of data to use for validation.
+        clean: Whether to clean the data.
+        interpolate_method: Method to use for interpolation.
+        batch_size: Batch size for training.
+        n_workers: Number of worker processes for data loading.
+        init_lr: Initial learning rate.
+        weight_decay: Weight decay for optimization.
+        n_epochs: Number of training epochs.
+        device: Device to use for training.
+        params: Additional parameters.
     """
     dataset = cast_dataset(dataset_name)
     dataset_config = get_dataset_config(dataset=dataset)

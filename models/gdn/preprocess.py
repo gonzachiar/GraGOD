@@ -10,17 +10,19 @@ def build_loc_net(struc: dict, columns: list) -> torch.Tensor:
     as defined in the structure dictionary.
 
     Args:
-        struc (dict): A dictionary representing the structure of the graph.
-                      Keys are node names, and values are lists of connected nodes.
-        columns (list): A list of column names to be included in the graph.
+        struc: A dictionary representing the structure of the graph.
+               Keys are node names, and values are lists of connected nodes.
+        columns: A list of column names to be included in the graph.
 
     Returns:
-        torch.Tensor: A tensor of shape (2, num_edges) representing the edge indices
-                      of the graph. The first row contains the indices of the source
-                      nodes, and the second row contains the indices of the target nodes.
+        A tensor of shape (2, num_edges) representing the edge indices
+        of the graph. The first row contains the indices of the source
+        nodes, and the second row contains the indices of the target
+        nodes.
 
     Note:
-        - The function only considers nodes (columns) that are present in the input 'columns' list.
+        - The function only considers nodes (columns) that are present in the input
+          'columns' list.
         - The resulting edge indices represent a directed graph where edges point from
           child nodes to parent nodes as defined in the 'struc' dictionary.
     """

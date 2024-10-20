@@ -11,27 +11,27 @@ class GDN(nn.Module):
     """
     Graph Deviation Network (GDN) model.
 
-    This model uses graph neural networks to detect deviations in graph-structured data.
+    This model uses graph neural networks to detect deviations in graph-structured data
 
     Attributes:
-        edge_index_sets (list): List of edge indices for different graph structures.
-        embedding (nn.Embedding): Node embedding layer.
-        bn_outlayer_in (nn.BatchNorm1d): Batch normalization layer for output.
-        gnn_layers (nn.ModuleList): List of GNN layers.
-        topk (int): Number of top similarities to consider for each node.
-        learned_graph (torch.Tensor): Learned graph structure.
-        out_layer (OutLayer): Output layer.
-        cache_edge_index_sets (list): Cached edge indices for batch processing.
-        dp (nn.Dropout): Dropout layer.
+        edge_index_sets: List of edge indices for different graph structures.
+        embedding: Node embedding layer.
+        bn_outlayer_in: Batch normalization layer for output.
+        gnn_layers: List of GNN layers.
+        topk: Number of top similarities to consider for each node.
+        learned_graph: Learned graph structure.
+        out_layer: Output layer.
+        cache_edge_index_sets: Cached edge indices for batch processing.
+        dp: Dropout layer.
 
     Args:
-        edge_index_sets (list): List of edge indices for different graph structures.
-        node_num (int): Number of nodes in the graph.
-        dim (int, optional): Dimension of node embeddings. Defaults to 64.
-        out_layer_inter_dim (int, optional): Intermediate dimension in output layer. Defaults to 256.
-        input_dim (int, optional): Input feature dimension. Defaults to 10.
-        out_layer_num (int, optional): Number of layers in output MLP. Defaults to 1.
-        topk (int, optional): Number of top similarities to consider for each node. Defaults to 20.
+        edge_index_sets: List of edge indices for different graph structures.
+        node_num: Number of nodes in the graph.
+        dim: Dimension of node embeddings.
+        out_layer_inter_dim: Intermediate dimension in output layer.
+        input_dim: Input feature dimension.
+        out_layer_num: Number of layers in output MLP.
+        topk: Number of top similarities to consider for each node.
     """
 
     def __init__(
@@ -44,11 +44,9 @@ class GDN(nn.Module):
         out_layer_num: int = 1,
         topk: int = 20,
     ):
-
         super(GDN, self).__init__()
 
         self.edge_index_sets = edge_index_sets
-
         embed_dim = dim
         self.embedding = nn.Embedding(node_num, embed_dim)
         self.bn_outlayer_in = nn.BatchNorm1d(embed_dim)
@@ -68,7 +66,6 @@ class GDN(nn.Module):
         self.cache_edge_index_sets = [None] * edge_set_num
 
         self.dp = nn.Dropout(0.2)
-
         self.init_params()
 
     def init_params(self):
@@ -80,10 +77,10 @@ class GDN(nn.Module):
         Forward pass of the GDN model.
 
         Args:
-            data (torch.Tensor): Input data tensor of shape [batch_size, node_num, feature_dim].
+            data: Input data tensor of shape [batch_size, node_num, feature_dim].
 
         Returns:
-            torch.Tensor: Output tensor of shape [batch_size * node_num].
+            Output tensor of shape [batch_size * node_num].
         """
 
         x = data.clone().detach()
@@ -172,12 +169,12 @@ class GDN(nn.Module):
         Get batched edge index for multiple graphs.
 
         Args:
-            org_edge_index (torch.Tensor): Original edge index.
-            batch_num (int): Number of graphs in the batch.
-            node_num (int): Number of nodes in each graph.
+            org_edge_index: Original edge index.
+            batch_num: Number of graphs in the batch.
+            node_num: Number of nodes in each graph.
 
         Returns:
-            torch.Tensor: Batched edge index.
+            Batched edge index.
         """
         edge_index = org_edge_index.clone().detach()
         edge_num = org_edge_index.shape[1]
