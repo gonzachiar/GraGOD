@@ -2,12 +2,12 @@
 name = "gragod"
 version = "0.1.0"
 description = ""
-authors = ["gonzachiar <gonzalochiarlone@gmail.com>",
-            "fede-bello <fe.debello@gmail.com>"]
-readme = "README.md"
-packages = [
-    { include = "gragod" },
+authors = [
+    "gonzachiar <gonzalochiarlone@gmail.com>",
+    "fede-bello <fe.debello@gmail.com>",
 ]
+readme = "README.md"
+packages = [{ include = "gragod" }]
 
 [tool.poetry.scripts]
 gragod = 'gragod.cli:app'
@@ -35,6 +35,9 @@ ipython = "^7.25.0"
 ipdb = "^0.13.9"
 mypy = "^0.910"
 tqdm = "^4.66.4"
+
+[tool.pyright]
+typeCheckingMode = "standard"
 
 [build-system]
 requires = ["poetry-core"]

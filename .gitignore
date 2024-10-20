@@ -145,3 +145,8 @@ data
 *.ckpt
 
 datasets_files/
+
+saved_models/
+saved_model/
+results/
+
