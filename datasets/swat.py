@@ -136,3 +136,7 @@ def load_swat_training_data(
         interpolate_method=interpolate_method,
     )
     return X_train, X_train_labels, X_val, X_val_labels, X_test, X_test_labels
+
+
+def get_swat_column_names_list() -> list[str]:
+    return list(load_swat_df_train()[0].columns)
