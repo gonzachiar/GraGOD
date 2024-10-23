@@ -145,3 +145,4 @@ data
 *.ckpt
 
 datasets_files/
+output/
