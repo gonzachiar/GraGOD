@@ -1,4 +1,4 @@
-dataset: "telco"
+dataset: "swat"
 
 data_params:
   data_dir: "data/"
@@ -41,7 +41,7 @@ predictor_params:
   dataset: "custom"
   target_dims: null
   scale_scores: false
-  level: 0.9999 
+  level: 0.9999
   q: 0.001
   dynamic_pot: false
   use_mov_av: false

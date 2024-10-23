@@ -20,6 +20,7 @@ def convert_df_to_tensor(df: pd.DataFrame) -> np.ndarray:
         The converted numpy array.
     """
     X = np.array(df.values[:, 1:])
+
     X = np.vstack(X).astype(float)  # type:ignore
 
     return X
@@ -89,6 +90,13 @@ def preprocess_df(
         The preprocessed data and labels DataFrames.
     """
     data = convert_df_to_tensor(data_df)
+
+    if labels_df is not None and len(labels_df.squeeze().shape) == 1:
+        # If there's only one label column, broadcast it to the data shape
+        labels_df = pd.DataFrame(
+            np.array(labels_df.values).reshape(-1, 1) * np.ones_like(data_df),
+            columns=data_df.columns,
+        )
     labels = convert_df_to_tensor(labels_df) if labels_df is not None else None
 
     if normalize:
